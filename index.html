@@ -1,0 +1,1758 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chémia – prvky a periodická tabuľka</title>
+<meta name="description" content="Učebná appka z chémie: periodická tabuľka, kovy, nekovy, polokovy, vzácne plyny, halogény, vodík a kyslík. Výklad po témach, skúška po každej téme a veľký test na známku.">
+<meta name="theme-color" content="#15803d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chémia">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root{
+    --accent:#2563eb;
+    --soft:#e8f0ff;
+    --ink:#1b2333;
+    --muted:#5d6b85;
+    --ok:#15803d;
+    --bad:#dc2626;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    color:var(--ink);
+    background:#f3f1fb;
+    min-height:100vh;
+    line-height:1.5;
+  }
+  /* prechod na pozadi je na pevnej vrstve, lebo background-attachment:fixed na iPhone nefunguje */
+  body::before{
+    content:"";position:fixed;top:0;left:0;right:0;bottom:0;z-index:-1;
+    background:linear-gradient(160deg,#eef4ff 0%,#f6efff 45%,#fff3e8 100%);
+  }
+  .wrap{
+    max-width:720px;margin:0 auto;
+    padding:16px 14px 56px;
+    padding-left:max(14px, env(safe-area-inset-left));
+    padding-right:max(14px, env(safe-area-inset-right));
+  }
+  .topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  /* na uzkom mobile by sa stitok do listy nezmestil; nazov obrazovky je aj v karte pod nou */
+  .topbar .pill{display:none;white-space:nowrap;}
+  .logo{
+    font-size:22px;font-weight:800;letter-spacing:-0.5px;cursor:pointer;
+    background:linear-gradient(90deg,#15803d,#2563eb 45%,#c2410c);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .spacer{flex:1;}
+  .card{
+    background:#fff;border-radius:18px;padding:18px;
+    box-shadow:0 10px 26px rgba(29,45,86,.10);
+    margin-bottom:14px;
+  }
+  .card.center{text-align:center;}
+  h1{font-size:25px;line-height:1.2;margin:0 0 6px;}
+  h2{font-size:20px;line-height:1.3;margin:0 0 10px;}
+  h3{font-size:17px;margin:0 0 8px;}
+  h4{font-size:15px;margin:0 0 6px;}
+  p{margin:0 0 10px;}
+  .muted{color:var(--muted);}
+  .small{font-size:14px;}
+  .kicker{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);margin-bottom:4px;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;justify-content:center;
+    padding:13px 20px;border:none;border-radius:14px;cursor:pointer;
+    font-size:16px;font-weight:700;font-family:inherit;line-height:1.25;
+    background:var(--accent);color:#fff;
+    box-shadow:0 4px 12px rgba(29,45,86,.18);
+    transition:transform .08s ease, filter .15s ease;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn.ghost{background:#fff;color:var(--accent);border:2px solid var(--accent);box-shadow:none;padding:11px 18px;}
+  .btn.grey{background:#eef1f7;color:#41506b;box-shadow:none;}
+  .btn.big{font-size:18px;padding:16px 22px;border-radius:16px;}
+  .btn.small{font-size:14px;padding:8px 14px;border-radius:10px;}
+  .btn.wide{width:100%;}
+  .btn:disabled{opacity:.45;cursor:default;transform:none;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .col{display:flex;flex-direction:column;gap:10px;}
+  .pill{
+    display:inline-block;padding:5px 12px;border-radius:999px;
+    background:var(--soft);color:var(--accent);font-weight:700;font-size:14px;
+  }
+  .sound{
+    border:2px solid #dfe5f1;background:#fff;border-radius:12px;width:44px;height:40px;
+    font-size:18px;cursor:pointer;
+  }
+  .bar{height:12px;border-radius:999px;background:#e5eaf4;overflow:hidden;margin:10px 0 6px;}
+  .bar span{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .3s ease;}
+
+  /* ---- cesta temami ---- */
+  .path{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+  .step{
+    display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+    font-family:inherit;font-size:16px;color:inherit;cursor:pointer;
+    background:#fff;border-radius:18px;padding:13px 14px;
+    box-shadow:0 6px 18px rgba(29,45,86,.08);
+    border:2px solid transparent;
+  }
+  .step .num{
+    flex:0 0 44px;height:44px;border-radius:14px;background:var(--soft);color:var(--accent);
+    font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;
+  }
+  .step.done .num{background:#e3f6ea;color:var(--ok);}
+  .step.next{border-color:var(--accent);}
+  .step .tt{font-weight:700;line-height:1.3;}
+  .step .ss{font-size:13.5px;color:var(--muted);line-height:1.35;margin-top:2px;}
+  .step .chev{margin-left:auto;color:#a8b3c9;font-size:24px;flex:0 0 auto;}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px;}
+  .tab{
+    border:2px solid #dfe5f1;background:#fff;border-radius:999px;padding:8px 16px;
+    font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;color:#41506b;
+  }
+  .tab.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .linkbtn{background:none;border:none;padding:0;font:inherit;color:var(--muted);text-decoration:underline;cursor:pointer;}
+
+  /* ---- vyklad ---- */
+  .pts{margin:0;padding-left:20px;}
+  .pts li{margin-bottom:8px;}
+  .pts li:last-child{margin-bottom:0;}
+  .pts b, .term b, .dates b{color:var(--accent);}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .two .side{background:var(--soft);border-radius:14px;padding:12px;}
+  .two .side.b{background:#fff3e8;}
+  .two .side h4{color:var(--accent);}
+  .two .side.b h4{color:#c2410c;}
+  /* zoznamy blokov maju rovnake farby ako mapa: Centralne mocnosti oranzova, Dohoda modra */
+  .two.blocs .side{background:#fff1e6;}
+  .two.blocs .side h4{color:#c2410c;}
+  .two.blocs .side.b{background:#e8f0ff;}
+  .two.blocs .side.b h4{color:#2563eb;}
+  .two ul{margin:0;padding-left:18px;}
+  .two li{margin-bottom:4px;}
+  .term{
+    border-left:6px solid var(--accent);background:var(--soft);
+    border-radius:0 14px 14px 0;padding:12px 14px;
+  }
+  .term h3{color:var(--accent);margin-bottom:2px;}
+  .term p{margin:0;}
+  .note{border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:15.5px;}
+  .note.tip{background:#fffbea;border:2px solid #f5d67a;}
+  .note.extra{background:#fff;border:2px dashed #a8b3c9;}
+  .note .nh{font-weight:800;display:block;margin-bottom:2px;}
+  .dates{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:baseline;}
+  .dates .d{font-weight:800;color:var(--accent);white-space:nowrap;}
+  .must{border:2px solid var(--accent);}
+  .dock{
+    position:-webkit-sticky;position:sticky;bottom:0;z-index:5;display:flex;gap:10px;
+    margin:0 -14px;padding:10px 14px;
+    padding-bottom:max(10px, env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.94);border-top:1px solid #e3e8f2;
+  }
+  .dock .btn{flex:1;}
+  .dock .btn.grey{flex:0 0 auto;}
+
+  /* ---- schema periodickej tabulky ---- */
+  .ptp{display:grid;grid-template-columns:16px repeat(18,1fr);gap:2px;margin:6px 0 4px;}
+  .ptp2{display:grid;grid-template-columns:16px repeat(18,1fr);gap:2px;margin:0 0 10px;}
+  .ptp2 .pl{grid-column:span 3;font-size:9.5px;font-weight:800;color:var(--muted);display:flex;align-items:center;}
+  .ptp .ph{font-size:9px;font-weight:800;color:var(--muted);text-align:center;line-height:14px;}
+  .ptp .pc, .ptp2 .pc{border-radius:3px;height:14px;}
+  .ptp .pe{height:14px;}
+  @media (min-width:560px){
+    .ptp .ph{font-size:11px;line-height:20px;}
+    .ptp .pc, .ptp2 .pc, .ptp .pe{height:20px;}
+    .ptp2 .pl{font-size:11px;}
+  }
+
+  /* ---- schematicka mapa ---- */
+  .map{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:46px;gap:6px;margin:6px 0 10px;}
+  .tile{
+    border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;
+    font-weight:800;font-size:12.5px;line-height:1.15;padding:2px 3px;color:#fff;
+  }
+  .tile.d{background:#2563eb;}
+  .tile.c{background:#c2410c;}
+  .tile.n{background:#e5eaf4;color:#41506b;}
+  .tile.new{background:#15803d;}
+  .tile.old{background:#e5eaf4;color:#41506b;}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13.5px;color:var(--muted);}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-1px;}
+
+  /* ---- otazky ---- */
+  .opts{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .opt{
+    text-align:left;font-family:inherit;font-size:16px;cursor:pointer;color:inherit;
+    background:#f5f7fb;border:2px solid #e3e8f2;border-radius:14px;
+    padding:12px 14px;display:flex;gap:10px;align-items:flex-start;width:100%;
+  }
+  .opt .lettr{
+    flex:0 0 28px;height:28px;border-radius:8px;background:#fff;
+    border:2px solid #d7deec;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:14px;
+  }
+  .opt .tag{margin-left:auto;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;padding-top:5px;}
+  /* oznacenie pred kontrolou je tmave, nie vo farbe temy, aby sa neplietlo so zelenou "spravne" */
+  .opt.on{border-color:var(--ink);background:#eef1f7;}
+  .opt.on .lettr{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .opt.correct{background:#e7f8ee;border-color:var(--ok);}
+  .opt.correct .lettr{background:#fff;border-color:var(--ok);color:var(--ok);}
+  .opt.wrong{background:#fdecec;border-color:var(--bad);}
+  .opt.wrong .lettr{background:#fff;border-color:var(--bad);color:var(--bad);}
+  .opt.missed{background:#fff;border:2px dashed var(--ok);}
+  .opt.missed .tag{color:var(--ok);}
+  .opt.wrong .tag{color:var(--bad);}
+  .opt:disabled{cursor:default;color:inherit;opacity:1;}
+  .grp{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .grow{background:#f5f7fb;border:2px solid #e3e8f2;border-radius:14px;padding:10px 12px;}
+  .grow.okrow{background:#e7f8ee;border-color:var(--ok);}
+  .grow.badrow{background:#fdecec;border-color:var(--bad);}
+  .gname{font-weight:700;margin-bottom:8px;}
+  .gbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .gb{
+    font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;line-height:1.2;
+    border:2px solid #d7deec;background:#fff;color:#41506b;border-radius:10px;padding:9px 6px;
+  }
+  .gb.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .gb.right{background:var(--ok);border-color:var(--ok);color:#fff;}
+  .gb.wrongsel{background:#fff;border-color:var(--bad);color:var(--bad);text-decoration:line-through;}
+  .gb:disabled{cursor:default;opacity:1;}
+  .txtwrap{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .txtin{
+    flex:1 1 200px;min-width:0;font-family:inherit;font-size:18px;font-weight:600;
+    padding:12px 14px;border-radius:14px;border:2px solid #d7deec;background:#f5f7fb;color:var(--ink);
+    outline:none;
+  }
+  .txtin:focus{border-color:var(--accent);background:#fff;}
+  .txtin.okin{border-color:var(--ok);background:#e7f8ee;}
+  .txtin.badin{border-color:var(--bad);background:#fdecec;}
+  .txtin:disabled{opacity:1;-webkit-text-fill-color:var(--ink);}
+  .hint{font-size:14px;color:var(--muted);margin-top:8px;}
+  .fb{border-radius:14px;padding:14px 16px;margin-top:14px;}
+  .fb.ok{background:#e7f8ee;border:2px solid var(--ok);}
+  .fb.no{background:#fdecec;border:2px solid var(--bad);}
+  .fb .head{font-weight:800;margin-bottom:4px;}
+  .fb.ok .head{color:var(--ok);}
+  .fb.no .head{color:var(--bad);}
+
+  /* ---- vysledky ---- */
+  .bigico{font-size:52px;line-height:1;margin-bottom:6px;}
+  .grade{
+    font-size:72px;font-weight:900;line-height:1;text-align:center;
+    background:linear-gradient(90deg,#15803d,#2563eb);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:14px 0;}
+  .stat{background:var(--soft);border-radius:14px;padding:10px 14px;text-align:center;min-width:92px;font-size:14px;}
+  .stat b{display:block;font-size:22px;}
+  .miss{border-left:5px solid var(--bad);background:#fff6f6;border-radius:0 12px 12px 0;padding:12px 14px;margin-bottom:10px;}
+  .miss .lbl{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+  .trow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #edf0f6;}
+  .trow:first-of-type{border-top:none;}
+  .trow .tn{flex:1;min-width:0;line-height:1.3;}
+  .trow .ts{font-weight:800;white-space:nowrap;}
+  .trow .ts.full{color:var(--ok);}
+  .trow .ts.part{color:var(--bad);}
+  .cheat{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:baseline;}
+  .cheat .k{font-weight:800;color:var(--accent);}
+  .cheat.wide .k{white-space:nowrap;}
+
+  @media (hover:hover){
+    .btn:hover:enabled{filter:brightness(1.07);}
+    .opt:hover:enabled{border-color:var(--accent);}
+    .step:hover{border-color:var(--accent);}
+    .gb:hover:enabled{border-color:var(--accent);}
+  }
+  button:focus-visible, .logo:focus-visible{outline:3px solid #1b2333;outline-offset:2px;}
+  @media (min-width:560px){
+    .wrap{padding-top:22px;}
+    .card{padding:22px;}
+    .map{grid-auto-rows:54px;}
+    .tile{font-size:14px;}
+    .logo{font-size:26px;}
+    .topbar .pill{display:inline-block;}
+  }
+  @media (max-width:380px){
+    .cheat.wide{grid-template-columns:1fr;gap:0;}
+    .cheat.wide .k{margin-top:8px;}
+    .tile{font-size:11.5px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .btn, .bar span{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+/* ============================================================
+   UCEBNA APLIKACIA - CHEMIA: PRVKY A PERIODICKA TABULKA
+   Obsah je zo skolskych poznamok. Bloky typu "extra" su
+   dovysvetlenie navyse, v zosite nie su.
+   ============================================================ */
+
+/* ===== FARBY TEM ===== */
+var PAL = [
+  {c:"#2563eb", s:"#e8f0ff"},
+  {c:"#15803d", s:"#e6f6ec"},
+  {c:"#c2410c", s:"#fff1e6"},
+  {c:"#7c3aed", s:"#f2ecff"},
+  {c:"#0e7490", s:"#e3f5f9"},
+  {c:"#be123c", s:"#ffe9ee"}
+];
+/* skuska z temy je zvladnuta od 80 % */
+var PASS = 0.8;
+
+/* ===== DATA: TEMY (vyklad + otazky) =====
+   Typy otazok:
+   mc    - vyber jednej moznosti, PRVA v poli "o" je spravna (pri zobrazeni sa zamiesaju)
+   tf    - pravda / nepravda
+   txt   - pisana odpoved, "acc" su uznane tvary
+   date  - pisany datum, "n" su ocakavane cisla [den, mesiac, rok] alebo [mesiac, rok] alebo [rok]
+   multi - oznac vsetky spravne ("ok" spravne, "no" nespravne)
+   group - roztried polozky do dvoch skupin ("a" patri do g[0], "b" do g[1])
+   order - zorad, pole "o" je v spravnom poradi */
+var LESSONS = [
+{
+  id:"ptp",
+  title:"Periodická tabuľka prvkov",
+  short:"Periódy, skupiny a valenčné elektróny",
+  intro:"Tabuľka nie je len zoznam prvkov. Z toho, kde prvok v nej stojí, vieš hneď prečítať, koľko má elektrónových vrstiev a koľko valenčných elektrónov.",
+  blocks:[
+    {t:"list", h:"Ako je tabuľka usporiadaná", li:[
+      "Zvislé stĺpce sú <b>skupiny</b> – číslujú sa <b>1 až 18</b> a majú aj rímske označenie (<b>I.A, II.A … VIII.A</b> a <b>I.B … VIII.B</b>).",
+      "Vodorovné riadky sú <b>periódy</b> – číslujú sa <b>1 až 7</b>.",
+      "Pod tabuľkou sú vysunuté dva riadky: <b>lantanoidy</b> a <b>aktinoidy</b>."
+    ]},
+    {t:"list", h:"Dve pravidlá, ktoré treba vedieť naspamäť", li:[
+      "<b>Číslo periódy</b> určuje <b>počet elektrónových vrstiev</b> v obale atómu. Zároveň označuje <b>číslo valenčnej vrstvy</b>.",
+      "<b>Rímske označenie skupiny</b> určuje <b>počet valenčných elektrónov</b>."
+    ]},
+    {t:"dates", h:"Príklad zo zošita: hliník Al", rows:[
+      ["3. perióda","&#8594; 3 elektrónové vrstvy, valenčná vrstva je <b>3.</b>"],
+      ["III.A skupina","&#8594; <b>3 valenčné elektróny</b>"]
+    ]},
+    {t:"ptp", m:"skupiny"},
+    {t:"list", h:"Skupiny, ktoré majú vlastný názov", li:[
+      "<b>1. skupina (I.A)</b> – alkalické kovy",
+      "<b>2. skupina (II.A)</b> – kovy alkalických zemín",
+      "<b>17. skupina (VII.A)</b> – halogény",
+      "<b>18. skupina (VIII.A)</b> – vzácne plyny"
+    ]},
+    {t:"tip", x:"Rímske číslo skupiny je rovno počet valenčných elektrónov: <b>I.A &#8594; 1</b>, <b>II.A &#8594; 2</b>, <b>VII.A &#8594; 7</b>, <b>VIII.A &#8594; 8</b>. A číslo periódy je rovno počet vrstiev. Takže „3. perióda, III.A“ čítaš ako „3 vrstvy, 3 valenčné elektróny“."},
+    {t:"extra", x:"Písmeno pri rímskom čísle rozlišuje dva druhy stĺpcov: <b>A</b> sú tie po krajoch tabuľky (1, 2 a 13 – 18), <b>B</b> sú tie v strede (3 – 12). Pravidlo o počte valenčných elektrónov používaj pri stĺpcoch <b>A</b>, lebo tie máš v zošite v príklade."}
+  ],
+  must:[
+    "Číslo periódy = počet elektrónových vrstiev = číslo valenčnej vrstvy",
+    "Rímske číslo skupiny = počet valenčných elektrónov",
+    "Al: 3. perióda, III.A skupina → 3 vrstvy, 3 valenčné elektróny",
+    "1 alkalické kovy, 2 kovy alkalických zemín, 17 halogény, 18 vzácne plyny, pod tabuľkou lantanoidy a aktinoidy"
+  ],
+  qs:[
+    {t:"mc", q:"Čo určuje číslo periódy?",
+     o:["počet elektrónových vrstiev v obale atómu","počet valenčných elektrónov","počet protónov v jadre","počet molekúl"],
+     e:"Číslo periódy určuje počet elektrónových vrstiev v obale atómu a zároveň označuje číslo valenčnej vrstvy."},
+    {t:"mc", q:"Čo určuje rímske označenie skupiny?",
+     o:["počet valenčných elektrónov","počet elektrónových vrstiev","číslo periódy","hmotnosť atómu"],
+     e:"Rímske označenie skupiny určuje počet valenčných elektrónov."},
+    {t:"txt", q:"Hliník Al je v 3. perióde a v III.A skupine. Koľko má valenčných elektrónov?", acc:["3","3 valenčné elektróny","tri"], sol:"3 valenčné elektróny",
+     e:"Postup: rímske číslo skupiny = počet valenčných elektrónov. III.A &#8594; <b>3 valenčné elektróny</b>."},
+    {t:"txt", q:"Hliník Al je v 3. perióde. Koľko má elektrónových vrstiev?", acc:["3","3 vrstvy","tri"], sol:"3 vrstvy",
+     e:"Postup: číslo periódy = počet elektrónových vrstiev. 3. perióda &#8594; <b>3 vrstvy</b>, a tretia vrstva je zároveň valenčná."},
+    {t:"txt", q:"Prvok je v 2. perióde a v VI.A skupine. Koľko má valenčných elektrónov?", acc:["6","6 valenčných elektrónov","šesť"], sol:"6 valenčných elektrónov",
+     e:"Postup: pozeráš sa na skupinu, nie na periódu. VI.A &#8594; <b>6 valenčných elektrónov</b>. Perióda 2 by ti povedala len to, že má 2 vrstvy."},
+    {t:"txt", q:"Prvok je v 4. perióde a v II.A skupine. Koľko má elektrónových vrstiev?", acc:["4","4 vrstvy","štyri"], sol:"4 vrstvy",
+     e:"Postup: pozeráš sa na periódu. 4. perióda &#8594; <b>4 elektrónové vrstvy</b>, valenčná je štvrtá. Skupina II.A by ti povedala, že má 2 valenčné elektróny."},
+    {t:"txt", q:"Prvok je v 5. perióde. Ktorá vrstva je u neho valenčná?", acc:["5","5.","piata","5. vrstva","piata vrstva"], sol:"5. (piata) vrstva",
+     e:"Číslo periódy zároveň označuje číslo valenčnej vrstvy, takže u prvku z 5. periódy je valenčná <b>5. vrstva</b>."},
+    {t:"order", q:"Zoraď skupiny podľa počtu valenčných elektrónov od najmenšieho po najväčší.",
+     o:["I.A &#8594; 1 valenčný elektrón","II.A &#8594; 2 valenčné elektróny","VII.A &#8594; 7 valenčných elektrónov","VIII.A &#8594; 8 valenčných elektrónov"],
+     e:"Rímske číslo skupiny je rovno počet valenčných elektrónov: I.A = 1, II.A = 2, VII.A = 7, VIII.A = 8."},
+    {t:"group", q:"Roztrieď názvy skupín podľa toho, kde v tabuľke stoja.", g:["na ľavom kraji","na pravom kraji"],
+     a:["alkalické kovy (1. skupina)","kovy alkalických zemín (2. skupina)"], b:["halogény (17. skupina)","vzácne plyny (18. skupina)"],
+     e:"Vľavo sú 1. skupina (alkalické kovy) a 2. skupina (kovy alkalických zemín), vpravo 17. skupina (halogény) a 18. skupina (vzácne plyny)."},
+    {t:"txt", q:"Ako sa volá 1. skupina (I.A)?", acc:["alkalické kovy","alkalicke kovy","alkalický kov"], sol:"alkalické kovy",
+     e:"1. skupina (I.A) sú alkalické kovy."},
+    {t:"txt", q:"Ako sa volá 2. skupina (II.A)?", acc:["kovy alkalických zemín","kovy alkalickych zemin","alkalické zeminy"], sol:"kovy alkalických zemín",
+     e:"2. skupina (II.A) sú kovy alkalických zemín."},
+    {t:"multi", q:"Ktoré dva riadky sú vysunuté pod periodickou tabuľkou?",
+     ok:["lantanoidy","aktinoidy"], no:["halogény","vzácne plyny","alkalické kovy"],
+     e:"Pod tabuľkou sú vysunuté lantanoidy a aktinoidy. Halogény, vzácne plyny a alkalické kovy sú stĺpce priamo v tabuľke."},
+    {t:"tf", q:"Periódy sa číslujú od 1 do 7.", a:true,
+     e:"Áno, v tabuľke je 7 periód (riadkov). Skupín (stĺpcov) je 18."}
+  ]
+},
+{
+  id:"kovy",
+  title:"Kovy",
+  short:"Vlastnosti kovov a ich značky",
+  intro:"Prvky v periodickej tabuľke rozdeľujeme aj na kovy, nekovy a polokovy. Kovov je najviac a spoznáš ich podľa štyroch vlastností.",
+  blocks:[
+    {t:"list", h:"Prvky v PTP rozdeľujeme na tri skupiny", li:[
+      "<b>KOVY</b>, <b>NEKOVY</b>, <b>POLOKOVY</b>"
+    ]},
+    {t:"list", h:"Vlastnosti kovov", li:[
+      "Väčšinou <b>pevné a tvrdé látky</b>.",
+      "Majú <b>tepelnú vodivosť</b> (vedú teplo) a <b>elektrickú vodivosť</b> (vedú elektrinu).",
+      "Sú <b>kujné</b> – vieme ich rozklepať až do tenkej vrstvičky, príklad: <b>ALOBAL</b>.",
+      "Sú <b>ťažné</b> – vieme z nich vytvarovať <b>drôt</b>.",
+      "<b>Ortuť je kvapalný kov.</b>"
+    ]},
+    {t:"list", h:"Značky kovov zo zošita", li:[
+      "<b>Fe, Cu, Sn, Ni, Pb, Au, Ag, Pt, Ti</b>"
+    ]},
+    {t:"ptp", m:"kovy"},
+    {t:"extra", h:"Čo znamenajú tie značky", x:"V zošite máš len značky, tak aby si vedel, o čo ide: <b>Fe</b> železo, <b>Cu</b> meď, <b>Sn</b> cín, <b>Ni</b> nikel, <b>Pb</b> olovo, <b>Au</b> zlato, <b>Ag</b> striebro, <b>Pt</b> platina, <b>Ti</b> titán. Ortuť má značku <b>Hg</b>. Skúšať ťa z toho nebudem, v zošite to nie je."},
+    {t:"tip", x:"<b>Kujné</b> = ide z nich vyklepať <b>plech</b> (alobal). <b>Ťažné</b> = ide z nich <b>ťahať drôt</b>. Ťažné – ťahať, to si zapamätáš ľahko."}
+  ],
+  must:[
+    "Prvky delíme na kovy, nekovy a polokovy",
+    "Kovy: pevné a tvrdé, vedú teplo a elektrinu, sú kujné (alobal) a ťažné (drôt)",
+    "Ortuť je kvapalný kov",
+    "Fe, Cu, Sn, Ni, Pb, Au, Ag, Pt, Ti"
+  ],
+  qs:[
+    {t:"multi", q:"Na ktoré tri skupiny delíme prvky v periodickej tabuľke?",
+     ok:["kovy","nekovy","polokovy"], no:["molekuly","zlúčeniny","halogény"],
+     e:"Prvky v PTP rozdeľujeme na kovy, nekovy a polokovy."},
+    {t:"txt", q:"Ako sa volá vlastnosť kovov, vďaka ktorej z nich vieme vytvarovať drôt?", acc:["ťažnosť","ťažné","ťažnost","tažnost","sú ťažné"], sol:"ťažnosť (sú ťažné)",
+     e:"Ťažné znamená, že z kovu vieme vytvarovať drôt."},
+    {t:"txt", q:"Ako sa volá vlastnosť kovov, vďaka ktorej ich vieme rozklepať až do tenkej vrstvičky (alobal)?", acc:["kujnosť","kujné","kujnost","sú kujné"], sol:"kujnosť (sú kujné)",
+     e:"Kujné znamená, že kov vieme rozklepať až do tenkej vrstvičky. Príklad zo zošita je alobal."},
+    {t:"mc", q:"Ktorý príklad máš v zošite pri kujnosti kovov?", o:["alobal","drôt","žiarovka","sklo"],
+     e:"Príkladom kujnosti je alobal – tenká vrstvička kovu."},
+    {t:"txt", q:"Ktorý kov je kvapalný?", acc:["ortuť","ortut","ortuť Hg","Hg"], sol:"ortuť",
+     e:"Ortuť je kvapalný kov."},
+    {t:"multi", q:"Ktoré vlastnosti majú podľa zošita kovy?",
+     ok:["väčšinou pevné a tvrdé látky","vedú teplo","vedú elektrinu","sú kujné","sú ťažné"],
+     no:["sú to väčšinou plyny","nevedú elektrinu"],
+     e:"Kovy sú väčšinou pevné a tvrdé, majú tepelnú aj elektrickú vodivosť, sú kujné a ťažné."},
+    {t:"multi", q:"Ktoré značky sú v zošite vymenované ako kovy?",
+     ok:["Fe","Cu","Au","Ag","Pt"], no:["O","Cl","Si","He"],
+     e:"V zošite sú kovy Fe, Cu, Sn, Ni, Pb, Au, Ag, Pt, Ti. O a Cl sú nekovy, Si je polokov, He je vzácny plyn."},
+    {t:"tf", q:"Kovy nevedú teplo ani elektrinu.", a:false,
+     e:"Naopak, kovy majú tepelnú vodivosť (vedú teplo) aj elektrickú vodivosť (vedú elektrinu)."},
+    {t:"mc", q:"V akom skupenstve sú kovy väčšinou?", o:["pevnom","kvapalnom","plynnom","plazmatickom"],
+     e:"Kovy sú väčšinou pevné a tvrdé látky. Výnimkou je ortuť, ktorá je kvapalná."}
+  ]
+},
+{
+  id:"nekovy",
+  title:"Nekovy a polokovy",
+  short:"Zvyšné dve skupiny prvkov",
+  intro:"Nekovy sú opakom kovov a polokovy sú niekde medzi nimi. Ich zoznamy sa oplatí vedieť naspamäť.",
+  blocks:[
+    {t:"list", h:"Nekovy", li:[
+      "<b>Plynné látky</b> alebo látky <b>pevného skupenstva</b>.",
+      "<b>O, N, H, Ne, Kr, Ar, Xe, F, Cl, I, C, Se, P, S</b>",
+      "<b>Br (bróm) je jediný kvapalný halogén.</b>"
+    ]},
+    {t:"list", h:"Polokovy", li:[
+      "<b>B, Si, Ge, As, Sb, Te, At</b>",
+      "Prvky, ktoré majú <b>niektoré vlastnosti kovov</b> a <b>niektoré vlastnosti nekovov</b>."
+    ]},
+    {t:"two",
+      a:{h:"Nekovy", li:["plynné alebo pevné","O, N, H, Ne, Kr, Ar","Xe, F, Cl, I, C, Se, P, S","Br – jediný kvapalný halogén"]},
+      b:{h:"Polokovy", li:["B, Si, Ge, As, Sb, Te, At","niektoré vlastnosti kovov","niektoré vlastnosti nekovov"]}},
+    {t:"ptp", m:"kovy"},
+    {t:"tip", x:"Polokovy v tabuľke tvoria <b>schodíky</b> medzi kovmi a nekovmi. V zošite ich máš sedem: <b>B, Si, Ge, As, Sb, Te, At</b>."}
+  ],
+  must:[
+    "Nekovy sú plynné látky alebo látky pevného skupenstva",
+    "Nekovy: O, N, H, Ne, Kr, Ar, Xe, F, Cl, I, C, Se, P, S",
+    "Br (bróm) je jediný kvapalný halogén",
+    "Polokovy: B, Si, Ge, As, Sb, Te, At – majú niektoré vlastnosti kovov a niektoré vlastnosti nekovov"
+  ],
+  qs:[
+    {t:"txt", q:"Doplň definíciu: polokovy sú prvky, ktoré majú niektoré vlastnosti kovov a niektoré vlastnosti ______.", acc:["nekovov","nekovy","nekov"], sol:"nekovov",
+     e:"Polokovy sú prvky, ktoré majú niektoré vlastnosti kovov a niektoré vlastnosti nekovov."},
+    {t:"multi", q:"Ktoré prvky patria podľa zošita medzi polokovy?",
+     ok:["B","Si","Ge","As","Sb","Te","At"], no:["Fe","Cl","Au","He"],
+     e:"Polokovy sú B, Si, Ge, As, Sb, Te, At. Fe a Au sú kovy, Cl a He sú nekovy."},
+    {t:"group", q:"Roztrieď značky prvkov na kovy a nekovy.", g:["kovy","nekovy"],
+     a:["Fe","Cu","Au","Ag"], b:["O","N","S","P"],
+     e:"Kovy: Fe, Cu, Au, Ag. Nekovy: O, N, S, P."},
+    {t:"group", q:"Roztrieď značky prvkov na nekovy a polokovy.", g:["nekovy","polokovy"],
+     a:["C","S","P","Se"], b:["B","Si","Ge","Sb"],
+     e:"Nekovy: C, S, P, Se. Polokovy: B, Si, Ge, Sb."},
+    {t:"mc", q:"V akom skupenstve sú nekovy?", o:["plynné látky alebo látky pevného skupenstva","vždy len plynné","vždy len kvapalné","vždy len pevné"],
+     e:"Nekovy sú plynné látky alebo látky pevného skupenstva."},
+    {t:"txt", q:"Ktorý halogén je jediný kvapalný?", acc:["bróm","brom","Br","bróm Br"], sol:"bróm (Br)",
+     e:"Br – bróm je jediný kvapalný halogén."},
+    {t:"mc", q:"Ktorá značka patrí brómu?", o:["Br","B","Ba","Bi"],
+     e:"Bróm má značku Br. B je bór, ktorý patrí medzi polokovy."},
+    {t:"multi", q:"Ktoré prvky sú v zošite vymenované medzi nekovmi?",
+     ok:["O","N","H","Cl","S"], no:["Fe","Cu","Si","Ti"],
+     e:"Medzi nekovmi máš O, N, H, Ne, Kr, Ar, Xe, F, Cl, I, C, Se, P, S. Fe, Cu a Ti sú kovy, Si je polokov."},
+    {t:"tf", q:"Polokovy majú len vlastnosti kovov.", a:false,
+     e:"Polokovy majú niektoré vlastnosti kovov a niektoré vlastnosti nekovov."}
+  ]
+},
+{
+  id:"vzacne",
+  title:"Vzácne plyny",
+  short:"18. skupina, oktet a dublet",
+  intro:"Vzácne plyny sú zvláštne tým, že s ničím nechcú reagovať. Dôvod je jediný: majú úplne zaplnenú valenčnú vrstvu.",
+  blocks:[
+    {t:"dates", h:"Vzácne plyny a ich značky", rows:[
+      ["hélium","He"],["neón","Ne"],["argón","Ar"],["kryptón","Kr"],["xenón","Xe"],["radón","Rn"]
+    ]},
+    {t:"list", h:"Kde v tabuľke sú", li:[
+      "<b>18. skupina (VIII.A)</b> &#8594; <b>8 valenčných elektrónov</b>."
+    ]},
+    {t:"def", n:"Oktet", x:"stav, keď má prvok na svojej valenčnej vrstve 8 é z maximálnych 8 é"},
+    {t:"def", n:"Dublet", x:"výnimka – hélium (He) má na 1. valenčnej vrstve 2 é, a tým ju má úplne zaplnenú"},
+    {t:"list", h:"Vlastnosti", li:[
+      "Kvôli <b>zaplneniu valenčnej vrstvy</b> sú <b>veľmi málo reaktívne</b>.",
+      "Sú to <b>plynné látky</b>.",
+      "Vyskytujú sa ako <b>samostatné atómy</b> (He, Ne …)."
+    ]},
+    {t:"dates", h:"Využitie", rows:[
+      ["He","náplň do balónov, do meteorologických balónov"],
+      ["Ar","výplň priestoru medzi sklami v okne, v žiarovkách a vo svietiacich telesách"],
+      ["Xe","v bleskoch fotoaparátov"],
+      ["Ne","neónové nápisy a neónové žiarovky"]
+    ]},
+    {t:"tip", x:"<b>Okto</b> je po grécky osem – <b>oktet = 8 elektrónov</b>. <b>Duo</b> sú dvaja – <b>dublet = 2 elektróny</b>, a to má len hélium, lebo na prvej vrstve sa viac ako 2 elektróny ani nezmestia."}
+  ],
+  must:[
+    "Vzácne plyny: He, Ne, Ar, Kr, Xe, Rn – 18. skupina (VIII.A), 8 valenčných elektrónov",
+    "Oktet = 8 é na valenčnej vrstve z maximálnych 8 é",
+    "Dublet = výnimka hélium, 2 é na 1. valenčnej vrstve",
+    "Sú veľmi málo reaktívne, plynné, vyskytujú sa ako samostatné atómy",
+    "He balóny, Ar okná a žiarovky, Xe blesky fotoaparátov, Ne neónové nápisy"
+  ],
+  qs:[
+    {t:"txt", q:"Koľko valenčných elektrónov majú vzácne plyny?", acc:["8","8 valenčných elektrónov","osem"], sol:"8",
+     e:"Postup: vzácne plyny sú 18. skupina, po rímsky VIII.A, a rímske číslo skupiny = počet valenčných elektrónov &#8594; <b>8</b>."},
+    {t:"txt", q:"Ako sa nazýva stav, keď má prvok na svojej valenčnej vrstve 8 é z maximálnych 8 é?", acc:["oktet"], sol:"oktet",
+     e:"Oktet = stav, keď má prvok na svojej valenčnej vrstve 8 é z max. 8 é."},
+    {t:"txt", q:"Ako sa nazýva výnimka, keď má prvok na 1. valenčnej vrstve 2 é, a tým ju má úplne zaplnenú?", acc:["dublet"], sol:"dublet",
+     e:"Dublet – 2 é na 1. valenčnej vrstve. Je to výnimka a má ju hélium."},
+    {t:"mc", q:"Ktorý prvok je výnimkou a má dublet?", o:["hélium He","neón Ne","argón Ar","xenón Xe"],
+     e:"Výnimkou je hélium (He). Má na prvej valenčnej vrstve 2 é, viac sa tam nezmestí."},
+    {t:"mc", q:"Prečo sú vzácne plyny veľmi málo reaktívne?", o:["lebo majú zaplnenú valenčnú vrstvu","lebo sú ťažšie ako vzduch","lebo sú kvapalné","lebo majú len 1 valenčný elektrón"],
+     e:"Kvôli zaplneniu valenčnej vrstvy sú veľmi málo reaktívne – nič im nechýba a nič nepotrebujú prijať."},
+    {t:"mc", q:"Ako sa vzácne plyny vyskytujú?", o:["ako samostatné atómy","ako dvojatómové molekuly","ako kryštáliky","ako kvapalina"],
+     e:"Vzácne plyny sa vyskytujú ako samostatné atómy (He, Ne …). Dvojatómové molekuly tvoria halogény."},
+    {t:"group", q:"Roztrieď využitie vzácnych plynov podľa zošita.", g:["hélium He","argón Ar"],
+     a:["náplň do balónov","náplň do meteorologických balónov"],
+     b:["výplň priestoru medzi sklami v okne","náplň do žiaroviek"],
+     e:"He sa používa ako náplň do balónov a meteorologických balónov. Ar je výplň priestoru medzi sklami v okne a je v žiarovkách a svietiacich telesách."},
+    {t:"mc", q:"Ktorý vzácny plyn je v bleskoch fotoaparátov?", o:["xenón Xe","hélium He","argón Ar","radón Rn"],
+     e:"V bleskoch fotoaparátov je xenón (Xe)."},
+    {t:"mc", q:"Ktorý vzácny plyn je v neónových žiarovkách a nápisoch?", o:["neón Ne","kryptón Kr","argón Ar","hélium He"],
+     e:"Neón (Ne) – odtiaľ aj názov neónové žiarovky."},
+    {t:"multi", q:"Ktoré prvky patria medzi vzácne plyny?",
+     ok:["He","Ne","Ar","Kr","Xe","Rn"], no:["Cl","O","N","Br"],
+     e:"Vzácne plyny sú hélium He, neón Ne, argón Ar, kryptón Kr, xenón Xe a radón Rn."},
+    {t:"txt", q:"V ktorej skupine periodickej tabuľky sú vzácne plyny? Napíš číslo skupiny.", acc:["18","18.","VIII.A","18. skupina","osemnásta"], sol:"18. skupina (VIII.A)",
+     e:"Vzácne plyny sú v 18. skupine, po rímsky VIII.A."},
+    {t:"tf", q:"Vzácne plyny sú veľmi reaktívne.", a:false,
+     e:"Naopak. Kvôli zaplnenej valenčnej vrstve sú veľmi málo reaktívne."}
+  ]
+},
+{
+  id:"halogeny",
+  title:"Halogény",
+  short:"17. skupina, vysoká reaktivita, vzhľad a využitie",
+  intro:"Halogény sú pravý opak vzácnych plynov. Do plného oktetu im chýba jediný elektrón, a preto reagujú skoro so všetkým.",
+  blocks:[
+    {t:"dates", h:"Halogény a ich značky", rows:[
+      ["fluór","F"],["chlór","Cl"],["bróm","Br"],["jód","I"],["astát","At"]
+    ]},
+    {t:"list", h:"Prečo sú také reaktívne", li:[
+      "<b>17. skupina (VII.A)</b> &#8594; <b>7 valenčných elektrónov</b>.",
+      "Do zaplnenia valenčnej vrstvy im <b>chýba 1 é</b>, ktorý <b>ľahko prijímajú</b> – to je <b>dôvod vysokej reaktivity</b>.",
+      "Vyskytujú sa ako <b>dvojatómové molekuly</b>: <b>F<sub>2</sub>, Cl<sub>2</sub>, Br<sub>2</sub>, I<sub>2</sub></b>.",
+      "<b>At</b> je <b>rádioaktívny prvok</b>."
+    ]},
+    {t:"dates", h:"Biogénne prvky – kde ich máš v tele", rows:[
+      ["F","v zuboch a kostiach"],
+      ["Cl","v kyseline chlorovodíkovej v žalúdku"],
+      ["I","v štítnej žľaze"]
+    ]},
+    {t:"dates", h:"Vzhľad", rows:[
+      ["F","žltozelený plyn"],
+      ["Cl","žltozelený plyn, vo vysokých koncentráciách žltý"],
+      ["Br","červenohnedá kvapalina"],
+      ["I","tmavofialové kryštáliky – <b>sublimuje</b>"]
+    ]},
+    {t:"dates", h:"Využitie", rows:[
+      ["Cl","dezinfekcia vody v bazénoch a pitnej vody; výroba kyseliny chlorovodíkovej (HCl) a PVC (polyvinylchlorid) – plast; bielenie kancelárskeho papiera a textilu"],
+      ["I","dezinfekcia povrchových rán – jódová tinktúra; súčasť kuchynskej soli (jódová soľ)"],
+      ["Br","vyvolávanie negatívov fotografií"]
+    ]},
+    {t:"tip", x:"Vzácne plyny majú <b>8</b> valenčných elektrónov a sú <b>lenivé</b>. Halogény majú <b>7</b> a chýba im <b>1</b>, preto sú <b>divoké</b>. Ten jeden chýbajúci elektrón je celý rozdiel."},
+    {t:"extra", x:"<b>Sublimovať</b> znamená, že pevná látka sa mení priamo na plyn, bez toho, aby sa najprv roztopila na kvapalinu. Jód to robí – z tmavofialových kryštálikov vzniká fialový plyn."}
+  ],
+  must:[
+    "Halogény: F, Cl, Br, I, At – 17. skupina (VII.A), 7 valenčných elektrónov",
+    "Chýba im 1 é, ktorý ľahko prijímajú → dôvod vysokej reaktivity",
+    "Dvojatómové molekuly F2, Cl2, Br2, I2; At je rádioaktívny",
+    "Biogénne: F zuby a kosti, Cl HCl v žalúdku, I štítna žľaza",
+    "Vzhľad: F a Cl žltozelený plyn, Br červenohnedá kvapalina, I tmavofialové kryštáliky – sublimuje"
+  ],
+  qs:[
+    {t:"txt", q:"Koľko valenčných elektrónov majú halogény?", acc:["7","7 valenčných elektrónov","sedem"], sol:"7",
+     e:"Postup: halogény sú 17. skupina, po rímsky VII.A &#8594; <b>7 valenčných elektrónov</b>."},
+    {t:"txt", q:"Koľko elektrónov chýba halogénom do zaplnenia valenčnej vrstvy?", acc:["1","1 elektrón","jeden"], sol:"1",
+     e:"Postup: plná vrstva je 8 é, halogény majú 7 é. 8 &minus; 7 = <b>1 é</b>. Ten ľahko prijímajú, a preto sú veľmi reaktívne."},
+    {t:"mc", q:"Prečo sú halogény veľmi reaktívne?", o:["lebo im chýba 1 é, ktorý ľahko prijímajú","lebo majú zaplnenú valenčnú vrstvu","lebo sú rádioaktívne","lebo tvoria samostatné atómy"],
+     e:"Do zaplnenia valenčnej vrstvy im chýba 1 é, ktorý ľahko prijímajú – to je dôvod vysokej reaktivity."},
+    {t:"eq", q:"Ako sa vyskytujú halogény? Napíš vzorec molekuly chlóru.", acc:["Cl2"], sol:"Cl<sub>2</sub>",
+     e:"Halogény sa vyskytujú ako dvojatómové molekuly, takže chlór je <b>Cl<sub>2</sub></b> – dvojka hovorí, že molekulu tvoria 2 atómy chlóru."},
+    {t:"eq", q:"Napíš vzorec molekuly jódu.", acc:["I2"], sol:"I<sub>2</sub>",
+     e:"Jód je dvojatómová molekula <b>I<sub>2</sub></b>. Rovnako F<sub>2</sub>, Cl<sub>2</sub> a Br<sub>2</sub>."},
+    {t:"mc", q:"Koľko atómov tvorí molekulu halogénu?", o:["2","1","3","8"],
+     e:"Halogény sa vyskytujú ako dvojatómové molekuly: F₂, Cl₂, Br₂, I₂."},
+    {t:"mc", q:"Ktorý halogén je rádioaktívny?", o:["astát At","fluór F","chlór Cl","jód I"],
+     e:"At – astát je rádioaktívny prvok."},
+    {t:"group", q:"Roztrieď, kde v tele máš tieto biogénne halogény.", g:["fluór F","jód I"],
+     a:["v zuboch","v kostiach"], b:["v štítnej žľaze","v jódovej soli, ktorú ješ"],
+     e:"F je v zuboch a kostiach, I v štítnej žľaze a je aj súčasťou kuchynskej (jódovej) soli."},
+    {t:"mc", q:"V ktorej látke v žalúdku máš chlór?", o:["v kyseline chlorovodíkovej","v kyseline sírovej","v slinách","v tuku"],
+     e:"Cl je v kyseline chlorovodíkovej v žalúdku."},
+    {t:"mc", q:"Ako vyzerá bróm?", o:["červenohnedá kvapalina","žltozelený plyn","tmavofialové kryštáliky","bezfarebný plyn"],
+     e:"Br je červenohnedá kvapalina – a zároveň jediný kvapalný halogén."},
+    {t:"mc", q:"Ako vyzerá jód a čo robí?", o:["tmavofialové kryštáliky, sublimuje","červenohnedá kvapalina, tuhne","žltozelený plyn, horí","bezfarebný plyn, sublimuje"],
+     e:"I sú tmavofialové kryštáliky, ktoré sublimujú."},
+    {t:"mc", q:"Ako vyzerá chlór?", o:["žltozelený plyn","červenohnedá kvapalina","tmavofialové kryštáliky","biely prášok"],
+     e:"Cl je žltozelený plyn, vo vysokých koncentráciách žltý. Rovnako žltozelený plyn je aj fluór."},
+    {t:"multi", q:"Na čo sa podľa zošita využíva chlór?",
+     ok:["dezinfekcia vody v bazénoch a pitnej vody","výroba kyseliny chlorovodíkovej (HCl)","výroba PVC – plastu","bielenie kancelárskeho papiera a textilu"],
+     no:["vyvolávanie negatívov fotografií","náplň do balónov"],
+     e:"Cl: dezinfekcia vody, výroba HCl a PVC, bielenie papiera a textilu. Vyvolávanie negatívov je bróm."},
+    {t:"mc", q:"Ktorý halogén sa používa na vyvolávanie negatívov fotografií?", o:["bróm Br","chlór Cl","jód I","fluór F"],
+     e:"Br sa používa na vyvolávanie negatívov fotografií."},
+    {t:"mc", q:"Čím sa dezinfikujú povrchové rany?", o:["jódovou tinktúrou","chlórom z bazéna","brómom","fluórom"],
+     e:"I – jódová tinktúra na dezinfekciu povrchových rán."},
+    {t:"txt", q:"V ktorej skupine periodickej tabuľky sú halogény? Napíš číslo skupiny.", acc:["17","17.","VII.A","17. skupina","sedemnásta"], sol:"17. skupina (VII.A)",
+     e:"Halogény sú v 17. skupine, po rímsky VII.A."},
+    {t:"multi", q:"Ktoré prvky patria medzi halogény?",
+     ok:["F","Cl","Br","I","At"], no:["He","Ne","O","S"],
+     e:"Halogény sú fluór F, chlór Cl, bróm Br, jód I a astát At."}
+  ]
+},
+{
+  id:"vodik",
+  title:"Vodík",
+  short:"HYDROGENIUM, výroba a dôkaz H₂",
+  intro:"Vodík je najjednoduchší a vo vesmíre najrozšírenejší prvok. V laboratóriu ho vyrobíš z kyseliny a zinku.",
+  blocks:[
+    {t:"def", n:"Vodík", x:"lat. <b>HYDROGENIUM</b>"},
+    {t:"list", h:"Vlastnosti", li:[
+      "<b>Najrozšírenejší prvok vo vesmíre.</b>",
+      "<b>Biogénny prvok</b> (tvorí živé organizmy).",
+      "<b>Bezfarebný plyn bez zápachu.</b>",
+      "V tlakových nádobách sa označuje <b>červenou farbou</b>."
+    ]},
+    {t:"list", h:"Výroba vodíka v laboratóriu", li:[
+      "kyselina chlorovodíková + zinok &#8594; vodík + chlorid zinočnatý",
+      "<b>2 HCl + Zn &#8594; H<sub>2</sub> + ZnCl<sub>2</sub></b>",
+      "<b>H<sub>2</sub></b> je <b>molekula vodíka</b> – tvoria ju 2 atómy vodíka.",
+      "Dôkaz: vzniká <b>treskavý plyn</b>, pri skúške <b>štekne</b>."
+    ]},
+    {t:"extra", x:"V zošite máš rovnicu napísanú ako „HCl + Zn &#8594; H<sub>2</sub> + ZnCl<sub>2</sub>“, ale na obrázku pod ňou sú nakreslené <b>dve</b> molekuly HCl. Správne vyčíslená rovnica je preto <b>2 HCl + Zn &#8594; H<sub>2</sub> + ZnCl<sub>2</sub></b>: vľavo aj vpravo musí byť rovnaký počet atómov (2 H, 2 Cl, 1 Zn). V skúške ti uznám obidva zápisy."},
+    {t:"list", h:"Využitie", li:[
+      "<b>Raketové palivo</b> a palivo vo <b>vodíkových autách</b>.",
+      "V minulosti <b>náplň do vzducholodí</b>.",
+      "<b>Tvorí slnko, hviezdy a planéty.</b>"
+    ]},
+    {t:"tip", x:"<b>Hydrogenium</b> – „hydro“ je voda. Vodík je ten, čo tvorí vodu. A červená farba na tlakovej nádobe = pozor, horľavý."}
+  ],
+  must:[
+    "Vodík = lat. HYDROGENIUM, najrozšírenejší prvok vo vesmíre, biogénny",
+    "Bezfarebný plyn bez zápachu, v tlakových nádobách červená farba",
+    "Výroba: kys. chlorovodíková + zinok → vodík + chlorid zinočnatý",
+    "2 HCl + Zn → H2 + ZnCl2, molekula vodíka je H2, dôkaz treskavý plyn",
+    "Využitie: raketové palivo, vodíkové autá, kedysi vzducholode; tvorí slnko, hviezdy, planéty"
+  ],
+  qs:[
+    {t:"txt", q:"Napíš latinský názov vodíka.", acc:["hydrogenium","hydrogénium"], sol:"HYDROGENIUM",
+     e:"Vodík = lat. HYDROGENIUM."},
+    {t:"mc", q:"Vodík je najrozšírenejší prvok kde?", o:["vo vesmíre","na Zemi","v mori","vo vzduchu"],
+     e:"Vodík je najrozšírenejší prvok vo vesmíre. Na Zemi je najrozšírenejší kyslík."},
+    {t:"mc", q:"Akou farbou sa vodík označuje v tlakových nádobách?", o:["červenou","bielou","zelenou","modrou"],
+     e:"Vodík sa v tlakových nádobách označuje červenou farbou. Kyslík bielou."},
+    {t:"eq", q:"Napíš vzorec molekuly vodíka.", acc:["H2"], sol:"H<sub>2</sub>",
+     e:"Molekula vodíka je <b>H<sub>2</sub></b> – tvoria ju 2 atómy vodíka."},
+    {t:"eq", q:"Doplň rovnicu výroby vodíka: 2 HCl + Zn &#8594; ______ + ZnCl<sub>2</sub>", acc:["H2"], sol:"H<sub>2</sub>",
+     e:"Vzniká <b>H<sub>2</sub></b>, teda vodík. Celá rovnica: 2 HCl + Zn &#8594; H<sub>2</sub> + ZnCl<sub>2</sub>."},
+    {t:"eq", q:"Doplň rovnicu výroby vodíka: 2 HCl + Zn &#8594; H<sub>2</sub> + ______", acc:["ZnCl2"], sol:"ZnCl<sub>2</sub>",
+     e:"Vzniká <b>ZnCl<sub>2</sub></b> – chlorid zinočnatý. Zinok si vzal obidva chlóry z kyseliny."},
+    {t:"eq", q:"Napíš celú rovnicu výroby vodíka v laboratóriu. (Píš napríklad takto: 2 HCl + Zn -> H2 + ZnCl2)",
+     acc:["2HCl + Zn -> H2 + ZnCl2","Zn + 2HCl -> H2 + ZnCl2","HCl + Zn -> H2 + ZnCl2","Zn + HCl -> H2 + ZnCl2","2HCl + Zn -> ZnCl2 + H2","HCl + Zn -> ZnCl2 + H2"],
+     sol:"2 HCl + Zn &#8594; H<sub>2</sub> + ZnCl<sub>2</sub>",
+     e:"Postup: zľava ide kyselina chlorovodíková a zinok, sprava vodík a chlorid zinočnatý. Vyčíslene: <b>2 HCl + Zn &#8594; H<sub>2</sub> + ZnCl<sub>2</sub></b> (2 H, 2 Cl a 1 Zn na oboch stranách)."},
+    {t:"txt", q:"Z čoho sa v laboratóriu vyrába vodík? Napíš, aká kyselina sa použije.", acc:["kyselina chlorovodíková","chlorovodíková","kys. chlorovodíková","HCl","kyselina chlorovodikova"], sol:"kyselina chlorovodíková (HCl)",
+     e:"Kyselina chlorovodíková + zinok &#8594; vodík + chlorid zinočnatý."},
+    {t:"txt", q:"Ktorý kov sa v laboratóriu pridáva do kyseliny chlorovodíkovej, aby vznikol vodík?", acc:["zinok","Zn","zinok Zn"], sol:"zinok (Zn)",
+     e:"Používa sa zinok Zn. Vznikne vodík a chlorid zinočnatý."},
+    {t:"txt", q:"Ako sa volá druhá látka, ktorá vznikne pri výrobe vodíka (ZnCl₂)?", acc:["chlorid zinočnatý","chlorid zinocnaty","zinočnatý chlorid"], sol:"chlorid zinočnatý",
+     e:"ZnCl₂ je chlorid zinočnatý."},
+    {t:"mc", q:"Ako sa volá plyn, ktorý pri skúške štekne a dokazuje vodík?", o:["treskavý plyn","vzácny plyn","žltozelený plyn","burel"],
+     e:"Vodík dokazuje treskavý plyn – pri skúške štekne."},
+    {t:"multi", q:"Na čo sa vodík podľa zošita využíva?",
+     ok:["raketové palivo","palivo vo vodíkových autách","v minulosti náplň do vzducholodí"],
+     no:["dezinfekcia vody v bazénoch","náplň do žiaroviek","rezanie a zváranie kovov"],
+     e:"Vodík: raketové palivo, vodíkové autá, kedysi vzducholode. Rezanie a zváranie kovov je kyslík, dezinfekcia vody je chlór."},
+    {t:"tf", q:"Vodík tvorí slnko, hviezdy a planéty.", a:true,
+     e:"Áno, to máš v zošite – vodík tvorí slnko, hviezdy a planéty."},
+    {t:"tf", q:"Vodík je bezfarebný plyn bez zápachu.", a:true,
+     e:"Áno. Rovnako aj kyslík je bezfarebný plyn bez zápachu."}
+  ]
+},
+{
+  id:"kyslik",
+  title:"Kyslík",
+  short:"OXYGENIUM, rozklad peroxidu vodíka",
+  intro:"Kyslík je najrozšírenejší prvok na Zemi. V laboratóriu ho získaš rozkladom peroxidu vodíka a dokážeš ho tlejúcou špajdľou.",
+  blocks:[
+    {t:"def", n:"Kyslík", x:"lat. <b>OXYGENIUM</b>"},
+    {t:"list", h:"Vlastnosti", li:[
+      "<b>Najrozšírenejší prvok na Zemi.</b>",
+      "<b>Biogénny prvok.</b>",
+      "<b>Bezfarebný plyn bez zápachu.</b>",
+      "V tlakových nádobách sa označuje <b>bielou farbou</b>."
+    ]},
+    {t:"list", h:"Výroba kyslíka v laboratóriu", li:[
+      "peroxid vodíka &#8594;<sup>burel</sup> voda + kyslík",
+      "<b>2 H<sub>2</sub>O<sub>2</sub> &#8594; 2 H<sub>2</sub>O + O<sub>2</sub></b>",
+      "<b>O<sub>2</sub></b> je <b>molekula kyslíka</b>.",
+      "Nad šípkou je <b>burel</b> (v zošite sú uvedené aj <b>kvasnice</b>) – ten rozklad urýchli.",
+      "Dôkaz: <b>tlejúca špajdľa</b> sa v kyslíku zmení na <b>horiacu špajdľu</b>."
+    ]},
+    {t:"list", h:"Využitie", li:[
+      "V <b>dýchacích prístrojoch</b>.",
+      "Ako <b>raketové palivo</b>.",
+      "Na <b>rezanie a zváranie kovov</b>."
+    ]},
+    {t:"extra", x:"Burel a kvasnice sa pri reakcii nespotrebujú, len ju zrýchlia – takej látke sa hovorí <b>katalyzátor</b>. Preto sa píšu nad šípku, a nie medzi látky."},
+    {t:"tip", x:"<b>Vodík</b> = najrozšírenejší <b>vo vesmíre</b>, nádoba <b>červená</b>, dôkaz <b>štekne</b>. <b>Kyslík</b> = najrozšírenejší <b>na Zemi</b>, nádoba <b>biela</b>, dôkaz <b>špajdľa sa rozhorí</b>. Tieto dvojice si neplet."}
+  ],
+  must:[
+    "Kyslík = lat. OXYGENIUM, najrozšírenejší prvok na Zemi, biogénny",
+    "Bezfarebný plyn bez zápachu, v tlakových nádobách biela farba",
+    "Výroba: peroxid vodíka --burel--> voda + kyslík",
+    "2 H2O2 → 2 H2O + O2, molekula kyslíka je O2",
+    "Dôkaz: tlejúca špajdľa sa zmení na horiacu",
+    "Využitie: dýchacie prístroje, raketové palivo, rezanie a zváranie kovov"
+  ],
+  qs:[
+    {t:"txt", q:"Napíš latinský názov kyslíka.", acc:["oxygenium","oxygénium"], sol:"OXYGENIUM",
+     e:"Kyslík = lat. OXYGENIUM."},
+    {t:"mc", q:"Kyslík je najrozšírenejší prvok kde?", o:["na Zemi","vo vesmíre","v telese Slnka","v kozme"],
+     e:"Kyslík je najrozšírenejší prvok na Zemi. Vo vesmíre je to vodík."},
+    {t:"mc", q:"Akou farbou sa kyslík označuje v tlakových nádobách?", o:["bielou","červenou","modrou","zelenou"],
+     e:"Kyslík sa označuje bielou farbou, vodík červenou."},
+    {t:"eq", q:"Napíš vzorec molekuly kyslíka.", acc:["O2"], sol:"O<sub>2</sub>",
+     e:"Molekula kyslíka je <b>O<sub>2</sub></b> – tvoria ju 2 atómy kyslíka."},
+    {t:"eq", q:"Napíš vzorec peroxidu vodíka.", acc:["H2O2"], sol:"H<sub>2</sub>O<sub>2</sub>",
+     e:"Peroxid vodíka je <b>H<sub>2</sub>O<sub>2</sub></b> – oproti vode H<sub>2</sub>O má o jeden kyslík navyše."},
+    {t:"eq", q:"Doplň rovnicu rozkladu peroxidu vodíka: 2 H<sub>2</sub>O<sub>2</sub> &#8594; 2 H<sub>2</sub>O + ______", acc:["O2"], sol:"O<sub>2</sub>",
+     e:"Vzniká <b>O<sub>2</sub></b>, teda kyslík. Celá rovnica: 2 H<sub>2</sub>O<sub>2</sub> &#8594; 2 H<sub>2</sub>O + O<sub>2</sub>."},
+    {t:"eq", q:"Doplň rovnicu rozkladu peroxidu vodíka: 2 H<sub>2</sub>O<sub>2</sub> &#8594; ______ + O<sub>2</sub>", acc:["2H2O"], sol:"2 H<sub>2</sub>O",
+     e:"Vzniká <b>2 H<sub>2</sub>O</b>, teda voda. Dvojka tam musí byť: vľavo sú 4 atómy vodíka (2 &times; H<sub>2</sub>), takže vpravo musia byť tiež 4."},
+    {t:"eq", q:"Napíš celú rovnicu výroby kyslíka v laboratóriu. (Píš napríklad takto: 2 H2O2 -> 2 H2O + O2)",
+     acc:["2H2O2 -> 2H2O + O2","2H2O2 -> O2 + 2H2O"], sol:"2 H<sub>2</sub>O<sub>2</sub> &#8594; 2 H<sub>2</sub>O + O<sub>2</sub>",
+     e:"Postup: z peroxidu vodíka vzniká voda a kyslík. Vyčíslene: <b>2 H<sub>2</sub>O<sub>2</sub> &#8594; 2 H<sub>2</sub>O + O<sub>2</sub></b>. Skontroluj si to: vľavo 4 H a 4 O, vpravo 4 H a 2 + 2 = 4 O. Sedí."},
+    {t:"txt", q:"Z akej látky sa v laboratóriu vyrába kyslík?", acc:["peroxid vodíka","peroxidu vodíka","peroxid vodika","H2O2"], sol:"peroxid vodíka (H₂O₂)",
+     e:"Peroxid vodíka sa rozkladá na vodu a kyslík."},
+    {t:"txt", q:"Ako sa volá látka, ktorá je v zošite napísaná nad šípkou a urýchli rozklad peroxidu vodíka?", acc:["burel"], sol:"burel",
+     e:"Nad šípkou je burel. V zošite sú uvedené aj kvasnice."},
+    {t:"mc", q:"Aké dve látky vzniknú pri rozklade peroxidu vodíka?", o:["voda a kyslík","vodík a kyslík","voda a vodík","kyselina a zinok"],
+     e:"Peroxid vodíka &#8594; voda + kyslík."},
+    {t:"mc", q:"Ako sa dokazuje kyslík?", o:["tlejúca špajdľa sa zmení na horiacu","plyn štekne","voda sa sfarbí na modro","vznikne červený dym"],
+     e:"Dôkaz kyslíka: tlejúca špajdľa sa v ňom rozhorí na horiacu špajdľu. Štekanie je dôkaz vodíka."},
+    {t:"multi", q:"Na čo sa kyslík podľa zošita využíva?",
+     ok:["v dýchacích prístrojoch","ako raketové palivo","na rezanie a zváranie kovov"],
+     no:["náplň do balónov","bielenie papiera","vyvolávanie negatívov fotografií"],
+     e:"Kyslík: dýchacie prístroje, raketové palivo, rezanie a zváranie kovov."},
+    {t:"group", q:"Roztrieď, čo patrí vodíku a čo kyslíku.", g:["vodík","kyslík"],
+     a:["najrozšírenejší vo vesmíre","v tlakovej nádobe červená farba","dôkaz: treskavý plyn štekne"],
+     b:["najrozšírenejší na Zemi","v tlakovej nádobe biela farba","dôkaz: tlejúca špajdľa sa rozhorí"],
+     e:"Vodík: vesmír, červená, štekne. Kyslík: Zem, biela, špajdľa sa rozhorí. Obidva sú biogénne a obidva sú bezfarebné plyny bez zápachu."},
+    {t:"tf", q:"Kyslík aj vodík sú biogénne prvky.", a:true,
+     e:"Áno, obidva sú v zošite označené ako biogénne prvky – tvoria živé organizmy."}
+  ]
+}
+];
+
+/* ===== DATA: SCHEMA PERIODICKEJ TABULKY =====
+   m:"skupiny" farbi skupiny s vlastnym menom, m:"kovy" farbi kovy / nekovy / polokovy */
+/* polokovy a nekovy podla zoznamov zo zosita, zapisane ako "skupina,perioda" */
+var SEMI = {"13,2":1, "14,3":1, "14,4":1, "15,4":1, "15,5":1, "16,5":1, "17,6":1};
+var NONMET = {"1,1":1, "14,2":1, "15,2":1, "16,2":1, "17,2":1, "15,3":1, "16,3":1, "17,3":1, "16,4":1, "17,4":1, "17,5":1};
+var PTPLEG = {
+  skupiny:[["#dc2626","1 – alkalické kovy"],["#ea580c","2 – kovy alkalických zemín"],["#16a34a","17 – halogény"],["#7c3aed","18 – vzácne plyny"],["#f59e0b","lantanoidy a aktinoidy"],["#cbd5e1","ostatné prvky"]],
+  kovy:[["#2563eb","kovy"],["#15803d","nekovy"],["#eab308","polokovy"]]
+};
+function cellColor(g, p, mode){
+  var key = g + "," + p;
+  if(mode === "kovy"){
+    if(SEMI[key]){ return "#eab308"; }
+    if(NONMET[key] || g === 18){ return "#15803d"; }
+    return "#2563eb";
+  }
+  if(g === 18){ return "#7c3aed"; }
+  if(g === 17 && p > 1){ return "#16a34a"; }
+  if(g === 1 && p > 1){ return "#dc2626"; }
+  if(g === 2 && p > 1){ return "#ea580c"; }
+  return "#cbd5e1";
+}
+/* ktore polia su v danej periode obsadene */
+function hasCell(g, p){
+  if(p === 1){ return g === 1 || g === 18; }
+  if(p === 2 || p === 3){ return g <= 2 || g >= 13; }
+  return true;
+}
+function ptpHtml(mode){
+  var html = '<div class="card"><h3>Periodická tabuľka – schéma</h3><div class="ptp">', g, p, i, leg;
+  html += '<div class="ph"></div>';
+  for(g = 1; g <= 18; g++){ html += '<div class="ph">' + g + '</div>'; }
+  for(p = 1; p <= 7; p++){
+    html += '<div class="ph">' + p + '</div>';
+    for(g = 1; g <= 18; g++){
+      if(hasCell(g, p)){
+        html += '<div class="pc" style="background:' + cellColor(g, p, mode) + ';"></div>';
+      } else {
+        html += '<div class="pe"></div>';
+      }
+    }
+  }
+  html += '</div><div class="ptp2"><span class="pl">La / Ac</span>';
+  for(i = 0; i < 14; i++){
+    html += '<div class="pc" style="background:' + (mode === "kovy" ? "#2563eb" : "#f59e0b") + ';"></div>';
+  }
+  html += '</div><div class="legend" style="margin-top:8px;">';
+  leg = PTPLEG[mode];
+  for(i = 0; i < leg.length; i++){
+    html += '<span><i style="background:' + leg[i][0] + ';"></i>' + leg[i][1] + '</span>';
+  }
+  html += '</div><div class="small muted" style="margin-top:8px;">Hore sú čísla skupín (1 – 18), vľavo čísla periód (1 – 7). Pod tabuľkou sú vysunuté lantanoidy a aktinoidy. Je to schéma, nie presná tabuľka.</div></div>';
+  return html;
+}
+
+/* ===== DATA: TAHAK ===== */
+var SYMBOLS = [
+  ["Kovy","Fe, Cu, Sn, Ni, Pb, Au, Ag, Pt, Ti (ortuť je kvapalný kov)"],
+  ["Nekovy","O, N, H, Ne, Kr, Ar, Xe, F, Cl, I, C, Se, P, S (Br je jediný kvapalný halogén)"],
+  ["Polokovy","B, Si, Ge, As, Sb, Te, At"],
+  ["Vzácne plyny","hélium He, neón Ne, argón Ar, kryptón Kr, xenón Xe, radón Rn"],
+  ["Halogény","fluór F, chlór Cl, bróm Br, jód I, astát At"],
+  ["Vodík","H – lat. HYDROGENIUM"],
+  ["Kyslík","O – lat. OXYGENIUM"]
+];
+var EQS = [
+  ["Molekula vodíka","H<sub>2</sub>"],
+  ["Molekula kyslíka","O<sub>2</sub>"],
+  ["Molekuly halogénov","F<sub>2</sub>, Cl<sub>2</sub>, Br<sub>2</sub>, I<sub>2</sub>"],
+  ["Peroxid vodíka","H<sub>2</sub>O<sub>2</sub>"],
+  ["Voda","H<sub>2</sub>O"],
+  ["Chlorid zinočnatý","ZnCl<sub>2</sub>"],
+  ["Kyselina chlorovodíková","HCl"],
+  ["Výroba vodíka","kys. chlorovodíková + zinok &#8594; vodík + chlorid zinočnatý<br><b>2 HCl + Zn &#8594; H<sub>2</sub> + ZnCl<sub>2</sub></b>"],
+  ["Výroba kyslíka","peroxid vodíka &#8594;<sup>burel</sup> voda + kyslík<br><b>2 H<sub>2</sub>O<sub>2</sub> &#8594; 2 H<sub>2</sub>O + O<sub>2</sub></b>"],
+  ["Dôkaz vodíka","treskavý plyn – štekne"],
+  ["Dôkaz kyslíka","tlejúca špajdľa sa zmení na horiacu"]
+];
+var TERMS = [
+  ["Perióda","riadok tabuľky (1 – 7); číslo periódy = počet elektrónových vrstiev = číslo valenčnej vrstvy"],
+  ["Skupina","stĺpec tabuľky (1 – 18); rímske číslo skupiny = počet valenčných elektrónov"],
+  ["Príklad Al","3. perióda, III.A skupina &#8594; 3 vrstvy, 3 valenčné elektróny"],
+  ["Kovy","väčšinou pevné a tvrdé, vedú teplo a elektrinu, kujné (alobal), ťažné (drôt)"],
+  ["Nekovy","plynné látky alebo látky pevného skupenstva"],
+  ["Polokovy","majú niektoré vlastnosti kovov a niektoré vlastnosti nekovov"],
+  ["Oktet","stav, keď má prvok na svojej valenčnej vrstve 8 é z max. 8 é"],
+  ["Dublet","výnimka hélium – 2 é na 1. valenčnej vrstve, ktorú tým má úplne zaplnenú"],
+  ["Vzácne plyny","18. skupina (VIII.A), 8 valenčných é, veľmi málo reaktívne, samostatné atómy"],
+  ["Halogény","17. skupina (VII.A), 7 valenčných é, chýba im 1 é &#8594; vysoká reaktivita, dvojatómové molekuly"],
+  ["Biogénny prvok","prvok, ktorý tvorí živé organizmy (H, O, F, Cl, I …)"],
+  ["Využitie He, Ar, Xe, Ne","He balóny a meteorologické balóny; Ar medzi sklami v okne a v žiarovkách; Xe blesky fotoaparátov; Ne neónové nápisy a žiarovky"],
+  ["Využitie Cl, I, Br","Cl dezinfekcia vody, výroba HCl a PVC, bielenie papiera a textilu; I jódová tinktúra a jódová soľ; Br vyvolávanie negatívov"],
+  ["Vzhľad halogénov","F a Cl žltozelený plyn, Br červenohnedá kvapalina, I tmavofialové kryštáliky – sublimuje"],
+  ["Využitie vodíka","raketové palivo, vodíkové autá, kedysi vzducholode; tvorí slnko, hviezdy, planéty"],
+  ["Využitie kyslíka","dýchacie prístroje, raketové palivo, rezanie a zváranie kovov"],
+  ["Tlakové nádoby","vodík červená farba, kyslík biela farba"]
+];
+
+
+/* kazda otazka si pamata, z ktorej temy je */
+var ALLQ = [];
+(function tagQuestions(){
+  var i, j;
+  for(i = 0; i < LESSONS.length; i++){
+    for(j = 0; j < LESSONS[i].qs.length; j++){
+      LESSONS[i].qs[j].li = i;
+      ALLQ.push(LESSONS[i].qs[j]);
+    }
+  }
+})();
+
+/* ===== POKROK (ulozeny v prehliadaci) ===== */
+var KEY = "chem1-pokrok-v1";
+var P = {quiz:{}, fin:null, sound:true};
+function loadProgress(){
+  try {
+    var raw = window.localStorage.getItem(KEY);
+    if(!raw){ return; }
+    var o = JSON.parse(raw);
+    if(o && typeof o === "object"){
+      if(o.quiz && typeof o.quiz === "object"){ P.quiz = o.quiz; }
+      if(o.fin && typeof o.fin === "object"){ P.fin = o.fin; }
+      if(o.sound === false){ P.sound = false; }
+    }
+  } catch(err){ /* bez ulozeneho pokroku appka funguje dalej */ }
+}
+function saveProgress(){
+  try { window.localStorage.setItem(KEY, JSON.stringify(P)); }
+  catch(err){ /* sukromne okno alebo plne ulozisko */ }
+}
+function passed(i){
+  var r = P.quiz[LESSONS[i].id];
+  return !!(r && r.total && (r.best / r.total) >= PASS);
+}
+function nextIdx(){
+  var i;
+  for(i = 0; i < LESSONS.length; i++){ if(!passed(i)){ return i; } }
+  return -1;
+}
+
+/* ===== ZVUK (Web Audio, ziadne subory) ===== */
+var ac = null;
+function ensureAudio(){
+  if(!ac){
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(err){ ac = null; }
+  }
+  if(ac && ac.state === "suspended"){ ac.resume(); }
+}
+function beep(freq, dur, type, vol, delay){
+  if(!P.sound){ return; }
+  ensureAudio();
+  if(!ac){ return; }
+  var t = ac.currentTime + (delay || 0);
+  var osc = ac.createOscillator();
+  var gain = ac.createGain();
+  osc.type = type || "sine";
+  osc.frequency.setValueAtTime(freq, t);
+  gain.gain.setValueAtTime(vol || 0.07, t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(gain);
+  gain.connect(ac.destination);
+  osc.start(t);
+  osc.stop(t + dur + 0.03);
+}
+function sGood(){ beep(660, 0.12, "sine", 0.09); beep(990, 0.18, "sine", 0.08, 0.1); }
+function sBad(){ beep(200, 0.3, "sawtooth", 0.06); }
+function sWin(){ beep(523, 0.14, "triangle", 0.09); beep(659, 0.14, "triangle", 0.09, 0.14); beep(784, 0.28, "triangle", 0.09, 0.28); }
+function sClick(){ beep(520, 0.05, "sine", 0.05); }
+
+/* ===== POMOCNE FUNKCIE ===== */
+function shuffle(arr){
+  var i, j, tmp;
+  for(i = arr.length - 1; i > 0; i--){
+    j = Math.floor(Math.random() * (i + 1));
+    tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+  }
+  return arr;
+}
+/* normalizacia napisanej odpovede: male pismena, bez diakritiky, bez interpunkcie */
+function norm(s){
+  s = (s === null || s === undefined) ? "" : String(s);
+  s = s.toLowerCase().trim();
+  /* NFD rozlozi pismeno na zakladne pismeno + znamienko, nasledne zahodime vsetko mimo ASCII */
+  if(s.normalize){ s = s.normalize("NFD").replace(/[^\x00-\x7F]/g, ""); }
+  s = s.replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  return s;
+}
+/* vzdialenost dvoch retazcov, aby drobny preklep nebol rovno chyba */
+function lev(a, b){
+  var m = a.length, n = b.length, i, j, prev, cur, tmp;
+  if(m === 0){ return n; }
+  if(n === 0){ return m; }
+  prev = [];
+  for(j = 0; j <= n; j++){ prev[j] = j; }
+  for(i = 1; i <= m; i++){
+    cur = [i];
+    for(j = 1; j <= n; j++){
+      tmp = (a.charAt(i - 1) === b.charAt(j - 1)) ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + tmp);
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+/* vzorce a rovnice: dolne indexy, sipka v lubovolnom zapise, medzery nehraju rolu */
+function normEq(s){
+  s = (s === null || s === undefined) ? "" : String(s);
+  s = s.toLowerCase();
+  s = s.replace(/[\u2080-\u2089]/g, function(ch){ return String(ch.charCodeAt(0) - 8320); });
+  s = s.replace(/[\u2192\u21d2\u27f6]/g, "|").replace(/-+>/g, "|").replace(/=+>/g, "|").replace(/=/g, "|");
+  if(s.normalize){ s = s.normalize("NFD").replace(/[^\x00-\x7F]/g, ""); }
+  s = s.replace(/[^a-z0-9+|]/g, "");
+  return s;
+}
+function eqOk(val, acc){
+  var v = normEq(val), i;
+  if(!v){ return false; }
+  for(i = 0; i < acc.length; i++){ if(v === normEq(acc[i])){ return true; } }
+  return false;
+}
+function txtOk(val, acc){
+  var v = norm(val), i, a;
+  if(!v){ return false; }
+  for(i = 0; i < acc.length; i++){
+    a = norm(acc[i]);
+    if(v === a){ return true; }
+    if(a.length > 5 && lev(v, a) <= 1){ return true; }
+  }
+  return false;
+}
+/* datum: mesiac moze byt cislom, slovom (v lubovolnom pade) alebo rimskou cislicou */
+var MONTHS = [
+  [/\bjanuar\w*/g, 1], [/\bfebruar\w*/g, 2], [/\bmar(ec|ca|ci|cu|com)\b/g, 3], [/\bapril\w*/g, 4],
+  [/\bmaj\w*/g, 5], [/\bjun\w*/g, 6], [/\bjul\w*/g, 7], [/\baugust\w*/g, 8],
+  [/\bseptemb\w*/g, 9], [/\boktob\w*/g, 10], [/\bnovemb\w*/g, 11], [/\bdecemb\w*/g, 12]
+];
+/* "v" tu chyba naschval: je to predlozka ("v marci"), nie rimska patka */
+var ROMAN = {i:1, ii:2, iii:3, iv:4, vi:6, vii:7, viii:8, ix:9, x:10, xi:11, xii:12};
+function dateNums(val){
+  var s = norm(val), i, toks, out = [];
+  for(i = 0; i < MONTHS.length; i++){ s = s.replace(MONTHS[i][0], " " + MONTHS[i][1] + " "); }
+  toks = s.split(" ");
+  for(i = 0; i < toks.length; i++){
+    if(/^\d+$/.test(toks[i])){ out.push(parseInt(toks[i], 10)); }
+    else if(ROMAN.hasOwnProperty(toks[i])){ out.push(ROMAN[toks[i]]); }
+  }
+  return out;
+}
+/* staci, ked koniec napisaneho datumu sedi: pri otazke na mesiac a rok sa uzna aj cely datum */
+function dateOk(val, want){
+  var got = dateNums(val), i, off;
+  if(got.length < want.length){ return false; }
+  off = got.length - want.length;
+  for(i = 0; i < want.length; i++){
+    if(got[off + i] !== want[i]){ return false; }
+  }
+  return true;
+}
+function escAttr(s){
+  return String(s === null || s === undefined ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function letter(i){ return ["A","B","C","D","E"][i] || "?"; }
+function gradeOf(pct){
+  if(pct >= 90){ return 1; }
+  if(pct >= 75){ return 2; }
+  if(pct >= 50){ return 3; }
+  if(pct >= 30){ return 4; }
+  return 5;
+}
+function gradeWord(g){
+  return ["", "výborný", "chválitebný", "dobrý", "dostatočný", "nedostatočný"][g];
+}
+function setAccent(i){
+  var p = PAL[i % PAL.length];
+  document.documentElement.style.setProperty("--accent", p.c);
+  document.documentElement.style.setProperty("--soft", p.s);
+}
+
+/* ===== PRIPRAVA OTAZKY NA ZOBRAZENIE =====
+   src drzi povodnu otazku, aby sa dala znova zamiesat bez straty spravnej odpovede */
+function prepare(src){
+  var q = {src:src, t:src.t, q:src.q, e:src.e, li:src.li};
+  var arr = [], i, sorted, guard;
+  if(src.t === "mc"){
+    for(i = 0; i < src.o.length; i++){ arr.push({x:src.o[i], ok:(i === 0)}); }
+    shuffle(arr);
+    q.o = []; q.a = 0;
+    for(i = 0; i < arr.length; i++){ q.o.push(arr[i].x); if(arr[i].ok){ q.a = i; } }
+  } else if(src.t === "tf"){
+    q.o = ["Pravda", "Nepravda"];
+    q.a = src.a ? 0 : 1;
+  } else if(src.t === "multi"){
+    for(i = 0; i < src.ok.length; i++){ arr.push({x:src.ok[i], ok:true}); }
+    for(i = 0; i < src.no.length; i++){ arr.push({x:src.no[i], ok:false}); }
+    q.items = shuffle(arr);
+  } else if(src.t === "group"){
+    for(i = 0; i < src.a.length; i++){ arr.push({x:src.a[i], g:0}); }
+    for(i = 0; i < src.b.length; i++){ arr.push({x:src.b[i], g:1}); }
+    q.items = shuffle(arr);
+    q.g = src.g;
+  } else if(src.t === "order"){
+    for(i = 0; i < src.o.length; i++){ arr.push({x:src.o[i], pos:i}); }
+    /* nesmie vyjst uz zoradene, inak by otazka nic nepytala */
+    guard = 0;
+    do {
+      shuffle(arr);
+      sorted = true;
+      for(i = 0; i < arr.length; i++){ if(arr[i].pos !== i){ sorted = false; } }
+      guard++;
+    } while(sorted && arr.length > 1 && guard < 20);
+    q.items = arr;
+  } else if(src.t === "txt" || src.t === "eq"){
+    q.acc = src.acc;
+    q.sol = src.sol || src.acc[0];
+  } else if(src.t === "date"){
+    q.n = src.n;
+    q.sol = src.sol;
+  }
+  return q;
+}
+function blankAns(q){
+  var out = [], i;
+  if(q.t === "multi"){ for(i = 0; i < q.items.length; i++){ out.push(false); } return out; }
+  if(q.t === "group"){ for(i = 0; i < q.items.length; i++){ out.push(-1); } return out; }
+  if(q.t === "order"){ return out; }
+  if(q.t === "txt" || q.t === "eq" || q.t === "date"){ return ""; }
+  return -1;
+}
+function isOk(q, a){
+  var i;
+  if(q.t === "mc" || q.t === "tf"){ return a === q.a; }
+  if(q.t === "multi"){
+    for(i = 0; i < q.items.length; i++){ if(!!a[i] !== q.items[i].ok){ return false; } }
+    return true;
+  }
+  if(q.t === "group"){
+    for(i = 0; i < q.items.length; i++){ if(a[i] !== q.items[i].g){ return false; } }
+    return true;
+  }
+  if(q.t === "order"){
+    if(a.length !== q.items.length){ return false; }
+    for(i = 0; i < a.length; i++){ if(q.items[a[i]].pos !== i){ return false; } }
+    return true;
+  }
+  if(q.t === "txt"){ return txtOk(a, q.acc); }
+  if(q.t === "eq"){ return eqOk(a, q.acc); }
+  if(q.t === "date"){ return dateOk(a, q.n); }
+  return false;
+}
+/* da sa uz odpoved skontrolovat? */
+function ready(q, a){
+  var i;
+  if(q.t === "multi"){ for(i = 0; i < a.length; i++){ if(a[i]){ return true; } } return false; }
+  if(q.t === "group"){ for(i = 0; i < a.length; i++){ if(a[i] < 0){ return false; } } return true; }
+  if(q.t === "order"){ return a.length === q.items.length; }
+  return true;
+}
+/* text spravnej odpovede a odpovede ziaka do prehladu chyb */
+function solText(q){
+  var out = [], i, g0 = [], g1 = [], sorted;
+  if(q.t === "mc" || q.t === "tf"){ return q.o[q.a]; }
+  if(q.t === "multi"){
+    for(i = 0; i < q.items.length; i++){ if(q.items[i].ok){ out.push(q.items[i].x); } }
+    return out.join(", ");
+  }
+  if(q.t === "group"){
+    for(i = 0; i < q.items.length; i++){ (q.items[i].g === 0 ? g0 : g1).push(q.items[i].x); }
+    return "<b>" + q.g[0] + ":</b> " + g0.join(", ") + "<br><b>" + q.g[1] + ":</b> " + g1.join(", ");
+  }
+  if(q.t === "order"){
+    sorted = q.items.slice().sort(function(x, y){ return x.pos - y.pos; });
+    for(i = 0; i < sorted.length; i++){ out.push((i + 1) + ". " + sorted[i].x); }
+    return out.join("<br>");
+  }
+  return q.sol;
+}
+function yourText(q, a){
+  var out = [], i;
+  if(q.t === "mc" || q.t === "tf"){ return q.o[a]; }
+  if(q.t === "multi"){
+    for(i = 0; i < q.items.length; i++){ if(a[i]){ out.push(q.items[i].x); } }
+    return out.join(", ");
+  }
+  if(q.t === "group"){
+    for(i = 0; i < q.items.length; i++){
+      if(a[i] !== q.items[i].g){ out.push(q.items[i].x + " → " + q.g[a[i]]); }
+    }
+    return out.join(", ");
+  }
+  if(q.t === "order"){
+    for(i = 0; i < a.length; i++){ out.push((i + 1) + ". " + q.items[a[i]].x); }
+    return out.join("<br>");
+  }
+  return escAttr(String(a).trim()) || "(nič)";
+}
+var KIND = {
+  mc:"vyber jednu možnosť", tf:"pravda alebo nepravda", txt:"napíš odpoveď", date:"napíš dátum", eq:"napíš vzorec",
+  multi:"označ všetky správne", group:"roztrieď", order:"zoraď"
+};
+
+/* ===== STAV APLIKACIE ===== */
+var S = {
+  screen:"home",
+  li:0,          /* otvorena tema */
+  run:null,      /* beziaca skuska: {kind, li, qs, i, ans, locked, log} */
+  cnt:30         /* pocet otazok vo velkom teste, 0 = vsetky */
+};
+var app = document.getElementById("app");
+
+/* ===== SPOLOCNE KUSY HTML ===== */
+function topbar(sub){
+  return '<div class="topbar">' +
+    '<div class="logo" data-act="home" role="link" tabindex="0">Chémia</div>' +
+    '<div class="spacer"></div>' +
+    (sub ? '<span class="pill">' + sub + '</span>' : '') +
+    '<button class="sound" data-act="sound" aria-label="Zvuk zapnúť alebo vypnúť">' + (P.sound ? "&#128266;" : "&#128263;") + '</button>' +
+    (S.screen === "home" ? '' : '<button class="btn grey small" data-act="home">Menu</button>') +
+    '</div>';
+}
+function blockHtml(b){
+  var html = "", i;
+  if(b.t === "list"){
+    html = '<div class="card">' + (b.h ? '<h3>' + b.h + '</h3>' : '') + '<ul class="pts">';
+    for(i = 0; i < b.li.length; i++){ html += '<li>' + b.li[i] + '</li>'; }
+    html += '</ul></div>';
+  } else if(b.t === "two"){
+    html = '<div class="card">' + (b.h ? '<h3>' + b.h + '</h3>' : '') + '<div class="two' + (b.k ? ' ' + b.k : '') + '">' +
+      '<div class="side"><h4>' + b.a.h + '</h4><ul>';
+    for(i = 0; i < b.a.li.length; i++){ html += '<li>' + b.a.li[i] + '</li>'; }
+    html += '</ul></div><div class="side b"><h4>' + b.b.h + '</h4><ul>';
+    for(i = 0; i < b.b.li.length; i++){ html += '<li>' + b.b.li[i] + '</li>'; }
+    html += '</ul></div></div></div>';
+  } else if(b.t === "def"){
+    html = '<div class="card"><div class="term"><h3>' + b.n + '</h3><p>' + b.x + '</p></div></div>';
+  } else if(b.t === "dates"){
+    html = '<div class="card">' + (b.h ? '<h3>' + b.h + '</h3>' : '') + '<div class="dates">';
+    for(i = 0; i < b.rows.length; i++){
+      html += '<div class="d">' + b.rows[i][0] + '</div><div>' + b.rows[i][1] + '</div>';
+    }
+    html += '</div></div>';
+  } else if(b.t === "tip"){
+    html = '<div class="note tip"><span class="nh">&#128161; Pomôcka</span>' + b.x + '</div>';
+  } else if(b.t === "extra"){
+    html = '<div class="note extra"><span class="nh">&#128221; ' + (b.h ? b.h : 'Dovysvetlenie') +
+      ' <span class="muted small" style="font-weight:600;">(nie je v zošite)</span></span>' + b.x + '</div>';
+  } else if(b.t === "ptp"){
+    html = ptpHtml(b.m);
+  }
+  return html;
+}
+function questionHtml(q, a, locked){
+  var html = "", ok = locked ? isOk(q, a) : false, i, cls, tag, n, sorted, mine, right, dis;
+  dis = locked ? " disabled" : "";
+  if(q.t === "mc" || q.t === "tf"){
+    html += '<div class="opts">';
+    for(i = 0; i < q.o.length; i++){
+      cls = "opt";
+      if(locked && i === q.a){ cls += " correct"; }
+      if(locked && i === a && a !== q.a){ cls += " wrong"; }
+      html += '<button class="' + cls + '" data-act="pick" data-val="' + i + '"' + dis + '>' +
+        '<span class="lettr">' + letter(i) + '</span><span>' + q.o[i] + '</span></button>';
+    }
+    html += '</div>';
+  } else if(q.t === "multi"){
+    html += '<div class="opts">';
+    for(i = 0; i < q.items.length; i++){
+      cls = "opt"; tag = "";
+      if(!locked && a[i]){ cls += " on"; }
+      if(locked && q.items[i].ok && a[i]){ cls += " correct"; }
+      if(locked && !q.items[i].ok && a[i]){ cls += " wrong"; tag = "nepatrí sem"; }
+      if(locked && q.items[i].ok && !a[i]){ cls += " missed"; tag = "chýbala"; }
+      html += '<button class="' + cls + '" data-act="tog" data-val="' + i + '"' + dis + '>' +
+        '<span class="lettr">' + (a[i] ? "&#10003;" : "") + '</span><span>' + q.items[i].x + '</span>' +
+        (tag ? '<span class="tag">' + tag + '</span>' : '') + '</button>';
+    }
+    html += '</div>';
+    if(!locked){ html += '<div class="hint">Označ všetky správne možnosti, môže ich byť viac.</div>'; }
+  } else if(q.t === "group"){
+    html += '<div class="grp">';
+    for(i = 0; i < q.items.length; i++){
+      mine = a[i]; right = q.items[i].g;
+      html += '<div class="grow' + (locked ? (mine === right ? " okrow" : " badrow") : "") + '">' +
+        '<div class="gname">' + (locked ? (mine === right ? "&#10003; " : "&#10007; ") : "") + q.items[i].x + '</div><div class="gbtns">';
+      for(n = 0; n < 2; n++){
+        cls = "gb";
+        if(!locked && mine === n){ cls += " on"; }
+        if(locked && n === right){ cls += " right"; }
+        if(locked && n === mine && mine !== right){ cls += " wrongsel"; }
+        html += '<button class="' + cls + '" data-act="grp" data-val="' + i + ':' + n + '"' + dis + '>' + q.g[n] + '</button>';
+      }
+      html += '</div></div>';
+    }
+    html += '</div>';
+    if(!locked){ html += '<div class="hint">Pri každom riadku vyber, kam patrí.</div>'; }
+  } else if(q.t === "order"){
+    html += '<div class="opts">';
+    if(!locked){
+      for(i = 0; i < q.items.length; i++){
+        n = a.indexOf(i);
+        html += '<button class="opt' + (n >= 0 ? " on" : "") + '" data-act="ord" data-val="' + i + '">' +
+          '<span class="lettr">' + (n >= 0 ? (n + 1) : "") + '</span><span>' + q.items[i].x + '</span></button>';
+      }
+    } else {
+      /* po vyhodnoteni ukazeme spravne poradie a pri kazdom riadku, kam ho dal ziak */
+      sorted = q.items.slice().sort(function(x, y){ return x.pos - y.pos; });
+      for(i = 0; i < sorted.length; i++){
+        n = a.indexOf(q.items.indexOf(sorted[i]));
+        html += '<button class="opt ' + (n === i ? "correct" : "wrong") + '" disabled>' +
+          '<span class="lettr">' + (i + 1) + '</span><span>' + sorted[i].x + '</span>' +
+          (n === i ? '' : '<span class="tag">ty: ' + (n + 1) + '.</span>') + '</button>';
+      }
+    }
+    html += '</div>';
+    if(!locked){ html += '<div class="hint">Ťukaj na udalosti v poradí, v akom sa stali. Ťuknutím na očíslovanú ju odznačíš.</div>'; }
+  } else {
+    html += '<div class="txtwrap">' +
+      '<input class="txtin' + (locked ? (ok ? " okin" : " badin") : "") + '" id="txtin" type="text" ' +
+      (q.t === "date" && q.n.length === 1 ? 'inputmode="numeric" ' : '') +
+      'autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" ' +
+      'placeholder="' + (q.t === "date" ? "Napíš dátum" : (q.t === "eq" ? "Napíš vzorec" : "Napíš odpoveď")) + '"' +
+      (locked ? ' disabled value="' + escAttr(a) + '"' : '') + '>' +
+      (locked ? '' : '<button class="btn" data-act="check">Skontrolovať</button>') +
+      '</div>';
+    if(!locked){
+      if(q.t === "eq"){ html += '<div class="hint">Dolné indexy píš ako obyčajné číslice (H2O), šípku ako -&gt; a medzi látkami daj +. Na medzerách nezáleží.</div>'; }
+      else if(q.t === "txt"){ html += '<div class="hint">Na diakritike ani na malom preklepe nezáleží.</div>'; }
+      else if(q.n.length === 3){ html += '<div class="hint">Napíš deň, mesiac a rok, napríklad 5. 3. 1900.</div>'; }
+      else if(q.n.length === 2){ html += '<div class="hint">Stačí mesiac a rok, napríklad „jún 1900“ alebo 6. 1900.</div>'; }
+      else { html += '<div class="hint">Napíš rok.</div>'; }
+    }
+  }
+  if(!locked && (q.t === "multi" || q.t === "group" || q.t === "order")){
+    html += '<div class="row" style="margin-top:14px;">' +
+      '<button class="btn wide" data-act="check"' + (ready(q, a) ? "" : " disabled") + '>Skontrolovať</button></div>';
+  }
+  if(locked){
+    html += '<div class="fb ' + (ok ? "ok" : "no") + '" id="fb">' +
+      '<div class="head">' + (ok ? "&#10004; Správne!" : "&#10008; Nesprávne") + '</div>' +
+      ((ok || q.t === "multi" || q.t === "group" || q.t === "order") ? "" :
+        '<div style="margin-bottom:6px;">Správna odpoveď: <b>' + solText(q) + '</b></div>') +
+      '<div>' + q.e + '</div></div>';
+  }
+  return html;
+}
+function focusInput(){
+  var inp = document.getElementById("txtin");
+  if(inp && !inp.disabled){ inp.focus(); }
+}
+function countOk(log){
+  var n = 0, i;
+  for(i = 0; i < log.length; i++){ if(log[i].ok){ n++; } }
+  return n;
+}
+function missHtml(log, withTopic){
+  var html = "", i, it;
+  for(i = 0; i < log.length; i++){
+    it = log[i];
+    if(it.ok){ continue; }
+    html += '<div class="miss">' +
+      (withTopic ? '<div class="lbl muted">' + LESSONS[it.q.li].title + '</div>' : '') +
+      '<b>' + it.q.q + '</b>' +
+      '<div style="margin-top:6px;">Tvoja odpoveď:<br><span style="color:var(--bad);font-weight:700;">' + yourText(it.q, it.ans) + '</span></div>' +
+      '<div style="margin-top:6px;">Správne:<br><span style="color:var(--ok);font-weight:700;">' + solText(it.q) + '</span></div>' +
+      '<div class="small muted" style="margin-top:6px;">' + it.q.e + '</div>' +
+      '</div>';
+  }
+  return html;
+}
+
+/* ===== OBRAZOVKA: DOMOV (cesta temami) ===== */
+function viewHome(){
+  setAccent(0);
+  var n = LESSONS.length, done = 0, i, r, nx = nextIdx(), started = false, p, cls, sub;
+  for(i = 0; i < n; i++){
+    if(passed(i)){ done++; }
+    if(P.quiz[LESSONS[i].id]){ started = true; }
+  }
+  var html = topbar("") +
+    '<div class="card">' +
+      '<div class="kicker">Chémia &middot; 9. ročník</div>' +
+      '<h1>Prvky a periodická tabuľka</h1>' +
+      '<p class="muted">Každú tému sa najprv naučíš a hneď ťa z nej vyskúšam. Potom ide ďalšia téma. Na konci ťa čaká veľký test na známku.</p>' +
+      '<div class="bar"><span style="width:' + Math.round((done / n) * 100) + '%"></span></div>' +
+      '<div class="small muted">Zvládnuté témy: <b>' + done + ' z ' + n + '</b></div>' +
+      '<div class="row" style="margin-top:14px;">';
+  if(nx >= 0){
+    html += '<button class="btn big wide" data-act="lesson" data-val="' + nx + '">' +
+      (started ? "Pokračovať: " : "Začať: ") + (nx + 1) + '. téma &#8594;</button>';
+  } else {
+    html += '<button class="btn big wide" data-act="final">Všetko zvládnuté, ideme na veľký test &#8594;</button>';
+  }
+  html += '</div></div><div class="path">';
+  for(i = 0; i < n; i++){
+    p = PAL[i % PAL.length];
+    r = P.quiz[LESSONS[i].id];
+    cls = "step" + (passed(i) ? " done" : "") + (i === nx ? " next" : "");
+    sub = LESSONS[i].short + (r ? ' &middot; skúška ' + r.best + '/' + r.total : '');
+    html += '<button class="' + cls + '" data-act="lesson" data-val="' + i + '" style="--accent:' + p.c + ';--soft:' + p.s + ';">' +
+      '<span class="num">' + (passed(i) ? "&#10003;" : (i + 1)) + '</span>' +
+      '<span><span class="tt">' + LESSONS[i].title + '</span><br><span class="ss">' + sub + '</span></span>' +
+      '<span class="chev">&#8250;</span></button>';
+  }
+  html += '</div>';
+  var cnts = [[20, "20 otázok"], [30, "30 otázok"], [0, "všetky (" + ALLQ.length + ")"]];
+  html += '<div class="card" style="--accent:#7c3aed;--soft:#f2ecff;">' +
+    '<div class="kicker">Na záver</div><h2>&#127942; Veľký test na známku</h2>' +
+    '<p class="muted">Otázky zo všetkých tém pomiešané dokopy. ' +
+    (done < n ? 'Najlepšie až po všetkých témach, ale spustiť ho môžeš hocikedy.' : 'Všetky témy máš zvládnuté, môžeš ísť na to.') + '</p>' +
+    (P.fin ? '<p><span class="pill">Najlepší výsledok: známka ' + P.fin.grade + ' (' + P.fin.pct + ' %)</span></p>' : '') +
+    '<div class="tabs">';
+  for(i = 0; i < cnts.length; i++){
+    html += '<button class="tab' + (S.cnt === cnts[i][0] ? " on" : "") + '" data-act="cnt" data-val="' + cnts[i][0] + '">' + cnts[i][1] + '</button>';
+  }
+  html += '</div><button class="btn wide" data-act="final">Spustiť veľký test</button></div>';
+  html += '<div class="card"><h2>&#128203; Ťahák</h2>' +
+    '<p class="muted">Značky, vzorce, rovnice a pojmy na jednom mieste. Dobré na posledné zopakovanie pred písomkou.</p>' +
+    '<button class="btn ghost wide" data-act="cheat">Otvoriť ťahák</button></div>';
+  html += '<div class="small muted" style="padding:0 6px;">' +
+    'Téma je zvládnutá od 80 % v skúške. Známkovanie veľkého testu: 100 – 90 % = 1, 89 – 75 % = 2, 74 – 50 % = 3, 49 – 30 % = 4, menej = 5. ' +
+    'Pokrok sa ukladá len v tomto prehliadači. ' +
+    (started || P.fin ? '<button class="linkbtn" data-act="reset">Vymazať pokrok</button>' : '') +
+    '</div>';
+  app.innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+/* ===== OBRAZOVKA: VYKLAD TEMY ===== */
+function viewLesson(){
+  var L = LESSONS[S.li], i, r = P.quiz[L.id];
+  setAccent(S.li);
+  var html = topbar("Téma " + (S.li + 1) + " z " + LESSONS.length) +
+    '<div class="card"><div class="kicker">' + (S.li + 1) + '. téma &middot; výklad</div>' +
+    '<h1>' + L.title + '</h1><p class="muted" style="margin:0;">' + L.intro + '</p></div>';
+  for(i = 0; i < L.blocks.length; i++){ html += blockHtml(L.blocks[i]); }
+  html += '<div class="card must"><h3>&#127919; Na písomku určite vedieť</h3><ul class="pts">';
+  for(i = 0; i < L.must.length; i++){ html += '<li>' + L.must[i] + '</li>'; }
+  html += '</ul></div>';
+  if(r){
+    html += '<div class="small muted" style="padding:0 6px 10px;">Tvoj najlepší výsledok v skúške: ' + r.best + ' z ' + r.total + '.</div>';
+  }
+  html += '<div class="dock">' +
+    (S.li > 0 ? '<button class="btn grey" data-act="lesson" data-val="' + (S.li - 1) + '" aria-label="Predchádzajúca téma">&#8592;</button>' : '') +
+    '<button class="btn" data-act="quiz">Vyskúšaj ma (' + L.qs.length + ' otázok) &#8594;</button></div>';
+  app.innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+/* ===== SKUSANIE (spolocne pre skusku z temy, opravu chyb aj velky test) ===== */
+function startRun(kind, li, list){
+  var qs = [], i;
+  shuffle(list);
+  for(i = 0; i < list.length; i++){ qs.push(prepare(list[i])); }
+  S.run = {kind:kind, li:li, qs:qs, i:0, ans:blankAns(qs[0]), locked:false, log:[]};
+  S.screen = "run";
+  render();
+}
+/* velky test berie otazky z tem postupne dokola, aby bola zastupena kazda tema */
+function pickFinal(count){
+  var pools = [], order = [], out = [], i, any = true;
+  for(i = 0; i < LESSONS.length; i++){
+    pools.push(shuffle(LESSONS[i].qs.slice()));
+    order.push(i);
+  }
+  if(!count || count > ALLQ.length){ count = ALLQ.length; }
+  while(out.length < count && any){
+    any = false;
+    shuffle(order);
+    for(i = 0; i < order.length && out.length < count; i++){
+      if(pools[order[i]].length){ out.push(pools[order[i]].pop()); any = true; }
+    }
+  }
+  return out;
+}
+function viewRun(fresh){
+  var R = S.run, q = R.qs[R.i], last = (R.i === R.qs.length - 1);
+  setAccent(R.kind === "final" || R.li < 0 ? 3 : R.li);
+  var label = (R.kind === "final") ? "Veľký test" : (R.kind === "fix" ? "Oprava chýb" : "Skúška &middot; téma " + (R.li + 1));
+  var pct = Math.round(((R.i + (R.locked ? 1 : 0)) / R.qs.length) * 100);
+  var html = topbar(label) +
+    '<div class="card">' +
+      '<div class="kicker">' + label + '</div>' +
+      '<div class="small muted">Otázka ' + (R.i + 1) + ' z ' + R.qs.length + ' &middot; správne: ' + countOk(R.log) + ' &middot; ' + KIND[q.t] + '</div>' +
+      '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
+      '<h2>' + q.q + '</h2>' +
+      questionHtml(q, R.ans, R.locked) +
+      (R.locked ? '<div class="row" style="margin-top:14px;"><button class="btn wide" data-act="next" id="nextbtn">' +
+        (last ? (R.kind === "final" ? "Vyhodnotiť test" : "Ukázať výsledok") : "Ďalej &#8594;") + '</button></div>' : '') +
+    '</div>';
+  app.innerHTML = html;
+  if(fresh){
+    window.scrollTo(0, 0);
+    focusInput();
+  } else if(R.locked){
+    var nb = document.getElementById("nextbtn");
+    if(nb && nb.scrollIntoView){ nb.scrollIntoView({block:"nearest", behavior:"smooth"}); }
+  }
+}
+function lockRun(){
+  var R = S.run, q = R.qs[R.i], ok = isOk(q, R.ans);
+  R.locked = true;
+  R.log.push({q:q, ans:R.ans, ok:ok});
+  if(ok){ sGood(); } else { sBad(); }
+  viewRun(false);
+}
+function finishRun(){
+  var R = S.run, total = R.log.length, correct = countOk(R.log), id, prev, pct;
+  if(R.kind === "quiz"){
+    id = LESSONS[R.li].id;
+    prev = P.quiz[id];
+    if(!prev || prev.total !== total || correct > prev.best){ P.quiz[id] = {best:correct, total:total}; }
+    saveProgress();
+    S.screen = "quizres";
+  } else if(R.kind === "fix"){
+    S.screen = "quizres";
+  } else {
+    pct = Math.round((correct / total) * 100);
+    if(!P.fin || pct > P.fin.pct){ P.fin = {pct:pct, grade:gradeOf(pct)}; }
+    saveProgress();
+    S.screen = "result";
+  }
+  sWin();
+  render();
+}
+
+/* ===== OBRAZOVKA: VYSLEDOK SKUSKY Z TEMY / OPRAVY CHYB ===== */
+function viewQuizRes(){
+  var R = S.run, total = R.log.length, correct = countOk(R.log), wrong = total - correct;
+  var pct = total ? Math.round((correct / total) * 100) : 0;
+  var fromFinal = (R.li < 0);
+  var ok = fromFinal ? true : passed(R.li);
+  var isLast = (R.li === LESSONS.length - 1);
+  var msg, html;
+  setAccent(fromFinal ? 3 : R.li);
+  if(R.kind === "fix"){
+    msg = (wrong === 0) ? "Všetky chyby sú opravené." : "Ešte niečo ostalo. Skús opravu znova.";
+  } else if(pct === 100){
+    msg = "Bez jedinej chyby. Táto téma ti sedí.";
+  } else if(ok && pct >= PASS * 100){
+    msg = "Téma je zvládnutá. Chyby si ešte môžeš opraviť.";
+  } else {
+    msg = "Na zvládnutie témy treba aspoň 80 %. Oprav si chyby a skús skúšku ešte raz.";
+  }
+  html = topbar("Výsledok") +
+    '<div class="card center">' +
+      '<div class="bigico">' + (wrong === 0 ? "&#127942;" : (pct >= PASS * 100 ? "&#9989;" : "&#128170;")) + '</div>' +
+      '<h1>' + (R.kind === "fix" ? "Oprava chýb" : "Skúška z " + (R.li + 1) + ". témy") + '</h1>' +
+      (fromFinal ? '' : '<p class="muted">' + LESSONS[R.li].title + '</p>') +
+      '<div class="stats">' +
+        '<div class="stat"><b>' + correct + ' / ' + total + '</b>správne</div>' +
+        '<div class="stat"><b>' + pct + ' %</b>úspešnosť</div>' +
+      '</div>' +
+      '<p>' + msg + '</p>' +
+      '<div class="col">';
+  if(wrong > 0){
+    html += '<button class="btn ' + (ok && R.kind !== "fix" ? "ghost" : "") + ' wide" data-act="fix">Opraviť chyby (' + wrong + ')</button>';
+  }
+  if(fromFinal){
+    html += '<button class="btn wide" data-act="final">Nový veľký test</button>';
+  } else {
+    if(ok){
+      html += isLast ?
+        '<button class="btn big wide" data-act="final">Ísť na veľký test &#8594;</button>' :
+        '<button class="btn big wide" data-act="lesson" data-val="' + (R.li + 1) + '">Ďalšia téma &#8594;</button>';
+    }
+    html += '<button class="btn ghost wide" data-act="quiz">Celá skúška znova</button>' +
+      '<button class="btn grey wide" data-act="lesson" data-val="' + R.li + '">Späť na výklad</button>';
+    if(!ok && !isLast){
+      html += '<button class="linkbtn" data-act="lesson" data-val="' + (R.li + 1) + '">Ísť na ďalšiu tému aj tak</button>';
+    }
+  }
+  html += '</div></div>';
+  if(wrong > 0){
+    html += '<div class="card"><h2>Prehľad chýb</h2>' + missHtml(R.log, fromFinal) + '</div>';
+  }
+  app.innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+/* ===== OBRAZOVKA: VYSLEDOK VELKEHO TESTU ===== */
+function viewResult(){
+  var R = S.run, total = R.log.length, correct = countOk(R.log), wrong = total - correct;
+  var pct = total ? Math.round((correct / total) * 100) : 0;
+  var g = gradeOf(pct), i, by = [], it, html;
+  setAccent(g <= 2 ? 1 : (g === 3 ? 0 : 2));
+  for(i = 0; i < LESSONS.length; i++){ by.push({c:0, t:0}); }
+  for(i = 0; i < R.log.length; i++){
+    it = R.log[i];
+    by[it.q.li].t++;
+    if(it.ok){ by[it.q.li].c++; }
+  }
+  html = topbar("Výsledok") +
+    '<div class="card"><h1 style="text-align:center;">Tvoja známka</h1>' +
+    '<div class="grade">' + g + '</div>' +
+    '<p style="text-align:center;font-weight:700;">' + gradeWord(g) + '</p>' +
+    '<div class="stats">' +
+      '<div class="stat"><b>' + pct + ' %</b>úspešnosť</div>' +
+      '<div class="stat"><b>' + correct + '</b>správne</div>' +
+      '<div class="stat"><b>' + wrong + '</b>chyby</div>' +
+    '</div>' +
+    '<div class="col">' +
+      (wrong > 0 ? '<button class="btn wide" data-act="fix">Opraviť chyby (' + wrong + ')</button>' : '') +
+      '<button class="btn ' + (wrong > 0 ? "ghost" : "") + ' wide" data-act="final">Nový veľký test</button>' +
+      '<button class="btn grey wide" data-act="home">Menu</button>' +
+    '</div></div>';
+  html += '<div class="card"><h2>Ako ti išli témy</h2>';
+  for(i = 0; i < LESSONS.length; i++){
+    if(!by[i].t){ continue; }
+    html += '<div class="trow"><div class="tn">' + (i + 1) + '. ' + LESSONS[i].title + '</div>' +
+      '<div class="ts ' + (by[i].c === by[i].t ? "full" : "part") + '">' + by[i].c + ' / ' + by[i].t + '</div>' +
+      (by[i].c === by[i].t ? '' : '<button class="btn grey small" data-act="lesson" data-val="' + i + '">Zopakovať</button>') +
+      '</div>';
+  }
+  html += '</div>';
+  if(wrong > 0){
+    html += '<div class="card"><h2>Prehľad chýb</h2>' + missHtml(R.log, true) + '</div>';
+  } else {
+    html += '<div class="card center"><h2>Bez chyby! &#127881;</h2><p class="muted">Všetko správne. Na písomku si pripravený.</p></div>';
+  }
+  app.innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+/* ===== OBRAZOVKA: TAHAK ===== */
+function viewCheat(){
+  setAccent(4);
+  var html = topbar("Ťahák"), i;
+  html += '<div class="card"><h2>&#9883; Značky prvkov</h2><div class="cheat wide">';
+  for(i = 0; i < SYMBOLS.length; i++){
+    html += '<div class="k" style="white-space:normal;">' + SYMBOLS[i][0] + '</div><div>' + SYMBOLS[i][1] + '</div>';
+  }
+  html += '</div></div><div class="card"><h2>&#129514; Vzorce a rovnice</h2><div class="cheat wide">';
+  for(i = 0; i < EQS.length; i++){
+    html += '<div class="k" style="white-space:normal;">' + EQS[i][0] + '</div><div>' + EQS[i][1] + '</div>';
+  }
+  html += '</div></div><div class="card"><h2>&#128214; Pojmy a zoznamy</h2><div class="cheat wide">';
+  for(i = 0; i < TERMS.length; i++){
+    html += '<div class="k" style="white-space:normal;">' + TERMS[i][0] + '</div><div>' + TERMS[i][1] + '</div>';
+  }
+  html += '</div></div>' + ptpHtml("skupiny") + ptpHtml("kovy") +
+    '<div class="dock"><button class="btn" data-act="home">Späť do menu</button></div>';
+  app.innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+/* ===== ROUTER ===== */
+function render(){
+  if(S.screen === "home"){ viewHome(); }
+  else if(S.screen === "lesson"){ viewLesson(); }
+  else if(S.screen === "run"){ viewRun(true); }
+  else if(S.screen === "quizres"){ viewQuizRes(); }
+  else if(S.screen === "result"){ viewResult(); }
+  else if(S.screen === "cheat"){ viewCheat(); }
+}
+
+/* ===== OVLADANIE (delegovanie udalosti, ziadne inline handlery) ===== */
+app.addEventListener("click", function(ev){
+  var el = ev.target;
+  while(el && el !== app && !(el.getAttribute && el.getAttribute("data-act"))){ el = el.parentNode; }
+  if(!el || el === app || el.disabled){ return; }
+  handle(el.getAttribute("data-act"), el.getAttribute("data-val"));
+});
+app.addEventListener("keydown", function(ev){
+  if(ev.key !== "Enter" && ev.keyCode !== 13){ return; }
+  var t = ev.target;
+  if(!t){ return; }
+  /* Enter v poli na pisanu odpoved funguje ako tlacidlo Skontrolovat */
+  if(t.id === "txtin"){ ev.preventDefault(); handle("check"); return; }
+  if(t.className === "logo"){ handle("home"); }
+});
+
+/* rozbehnuty velky test sa neopusta bez opytania */
+function leaveOk(){
+  var R = S.run;
+  if(S.screen === "run" && R && R.kind === "final" && R.log.length > 0){
+    return window.confirm("Veľký test ešte nie je dokončený. Naozaj ho chceš ukončiť?");
+  }
+  return true;
+}
+
+function handle(act, val){
+  var R = S.run, q, i, parts, inp, list;
+  if(act === "home"){
+    if(!leaveOk()){ return; }
+    S.screen = "home"; sClick(); render(); return;
+  }
+  if(act === "sound"){
+    P.sound = !P.sound;
+    saveProgress();
+    if(P.sound){ ensureAudio(); sClick(); }
+    if(S.screen === "run"){ viewRun(false); } else { render(); }
+    return;
+  }
+  if(act === "lesson"){ S.li = parseInt(val, 10); S.screen = "lesson"; sClick(); render(); return; }
+  if(act === "cheat"){ S.screen = "cheat"; sClick(); render(); return; }
+  if(act === "cnt"){ S.cnt = parseInt(val, 10); sClick(); render(); return; }
+  if(act === "reset"){
+    if(window.confirm("Naozaj vymazať celý pokrok?")){
+      P.quiz = {}; P.fin = null;
+      saveProgress();
+      render();
+    }
+    return;
+  }
+  if(act === "quiz"){
+    /* zo stranky s vysledkom sa opakuje ta ista tema, z vykladu otvorena tema */
+    i = (S.screen === "quizres" && R && R.li >= 0) ? R.li : S.li;
+    S.li = i;
+    sClick();
+    startRun("quiz", i, LESSONS[i].qs.slice());
+    return;
+  }
+  if(act === "final"){ sClick(); startRun("final", -1, pickFinal(S.cnt)); return; }
+  if(act === "fix"){
+    list = [];
+    for(i = 0; i < R.log.length; i++){ if(!R.log[i].ok){ list.push(R.log[i].q.src); } }
+    if(!list.length){ return; }
+    sClick();
+    startRun("fix", (R.kind === "final") ? -1 : R.li, list);
+    return;
+  }
+  if(!R || S.screen !== "run"){ return; }
+  q = R.qs[R.i];
+  if(act === "next"){
+    if(!R.locked){ return; }
+    if(R.i === R.qs.length - 1){ finishRun(); return; }
+    R.i++;
+    R.ans = blankAns(R.qs[R.i]);
+    R.locked = false;
+    viewRun(true);
+    return;
+  }
+  if(R.locked){ return; }
+  if(act === "pick"){ R.ans = parseInt(val, 10); lockRun(); return; }
+  if(act === "tog"){ i = parseInt(val, 10); R.ans[i] = !R.ans[i]; viewRun(false); return; }
+  if(act === "grp"){
+    parts = val.split(":");
+    R.ans[parseInt(parts[0], 10)] = parseInt(parts[1], 10);
+    viewRun(false);
+    return;
+  }
+  if(act === "ord"){
+    i = parseInt(val, 10);
+    if(R.ans.indexOf(i) >= 0){ R.ans.splice(R.ans.indexOf(i), 1); } else { R.ans.push(i); }
+    viewRun(false);
+    return;
+  }
+  if(act === "check"){
+    if(q.t === "txt" || q.t === "eq" || q.t === "date"){
+      inp = document.getElementById("txtin");
+      if(!inp || !inp.value.replace(/\s/g, "")){ if(inp){ inp.focus(); } return; }
+      R.ans = inp.value;
+    } else if(!ready(q, R.ans)){ return; }
+    lockRun();
+    return;
+  }
+}
+
+loadProgress();
+render();
+
+/* offline: po prvom otvoreni sa appka ulozi do telefonu */
+if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){ /* bez offline rezimu appka funguje dalej */ });
+  });
+}
+</script>
+</body>
+</html>
